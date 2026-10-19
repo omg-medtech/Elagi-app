@@ -4,6 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#04A093">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" type="image/png" sizes="48x48" href="icons/favicon-48.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="عِلاجي">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <title>Elagi — نساعدك لتتعافى</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -290,8 +297,12 @@ const LS={
 function cacheLocalProfile(id,u){
   try{localStorage.setItem(`ilaji.profile.v3.${id}`,JSON.stringify({first:u.first||"",last:u.last||"",phone:u.phone||"",updatedAt:Date.now()}))}catch(e){console.warn("Local profile cache unavailable",e)}
 }
-function clearLocalProfile(id){try{localStorage.removeItem(`ilaji.profile.v3.${id}`)}catch{}}
+function clearLocalProfile(id){try{localStorage.removeItem(`ilaji.profile.v3.${id}`);localStorage.removeItem("elagi.pwa.data."+id);localStorage.removeItem("elagi.pwa.data."+id+".dirty")}catch{}}
 function cloudError(e){console.error("Supabase:",e);throw e}
+function netErr(e){return !navigator.onLine||!!(e&&/fetch|network|Load failed|timeout|Retryable/i.test(String(e.name||"")+" "+String(e.message||e)))}
+function lsGet(k){try{const v=localStorage.getItem(k);return v?JSON.parse(v):null}catch{return null}}
+function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){console.warn("offline cache full",e)}}
+function lsDel(k){try{localStorage.removeItem(k)}catch{}}
 function cloudMsg(e){
   const m=String(e&&(e.message||e)||""),c=String(e&&(e.code||e.status)||"");
   let t="تعذّر الاتصال بالخادم الآن. حاول مرة أخرى.";
@@ -301,6 +312,9 @@ function cloudMsg(e){
   else if(/Error sending (magic link|confirmation) email|535|Authentication failed/i.test(c+" "+m))t="تعذّر إرسال رسالة التأكيد. راجع بيانات SMTP واسم دخول Brevo ومفتاح SMTP في Supabase.";
   else if(/Invalid login credentials/i.test(c+" "+m))t="البريد الإلكتروني أو كلمة المرور غير صحيحة. وإذا كان الحساب قديمًا، استخدم نسيت كلمة المرور لإنشاء كلمة مرور.";
   else if(/User already registered/i.test(c+" "+m))t="هذا البريد مسجّل بالفعل؛ اختر تسجيل الدخول أو استخدم نسيت كلمة المرور.";
+  else if(e&&/NotAllowedError/.test(e.name||""))t=window.ELANG==="en"?"Fingerprint was cancelled or timed out. Make sure a screen lock/fingerprint is set up on this device and try again.":"أُلغيت البصمة أو انتهت مهلتها. تأكد من تفعيل قفل الشاشة/البصمة في جهازك ثم حاول مجددًا.";
+  else if(e&&/InvalidStateError/.test(e.name||""))t=window.ELANG==="en"?"This device already has a passkey for this account.":"هذا الجهاز مسجَّل بمفتاح مرور لهذا الحساب بالفعل.";
+  else if(e&&/SecurityError|NotSupportedError/.test(e.name||""))t=window.ELANG==="en"?"This device or domain doesn't support passkeys here.":"هذا الجهاز أو النطاق لا يدعم مفاتيح المرور هنا. تأكد من فتح التطبيق من رابط HTTPS الرسمي.";
   else if(/passkey_disabled/i.test(c+m))t="فعّل Passkeys من Authentication → Passkeys في Supabase، واضبط نطاق HTTPS المسموح.";
   else if(/manual.*link|identity.*link|not enabled/i.test(c+m))t="فعّل Manual Identity Linking من إعدادات Auth في Supabase قبل ربط Google بحساب قائم.";
   else if(/fetch|network|timeout|load failed/i.test(m))t="لا يصل التطبيق إلى Supabase. تحقق من الإنترنت وإعدادات المشروع.";
@@ -309,8 +323,12 @@ function cloudMsg(e){
 const Cloud={
   async currentUser(){
     if(!sb)throw sbInitError||new Error("no supabase");
-    const {data,error}=await sb.auth.getUser();if(error)cloudError(error);
-    if(!data?.user)throw new Error("يجب تسجيل الدخول أولًا");return data.user;
+    let r;try{r=await sb.auth.getUser()}catch(e){r={error:e}}
+    if(r.error||!r.data?.user){
+      if(netErr(r.error)){const {data:ss}=await sb.auth.getSession();if(ss?.session?.user)return ss.session.user}
+      if(r.error)cloudError(r.error);throw new Error("يجب تسجيل الدخول أولًا");
+    }
+    return r.data.user;
   },
   async signUp(email,password,first,last){
     if(!sb)throw sbInitError||new Error("no supabase");
@@ -339,17 +357,23 @@ const Cloud={
     const {error}=await sb.auth.resend({type:"signup",email,options:{emailRedirectTo:location.origin+location.pathname}});if(error)cloudError(error);
   },
   async get(){
-    const user=await this.currentUser();
-    const {data,error}=await sb.from("user_data").select("data").eq("user_id",user.id).maybeSingle();
-    if(error)cloudError(error);
-    if(!data?.data)return null;
-    const profile={...data.data,email:user.email,_authUserId:user.id};cacheLocalProfile(user.id,profile);return profile;
+    const user=await this.currentUser(),dk="elagi.pwa.data."+user.id,dirty=lsGet(dk+".dirty"),cached=lsGet(dk);
+    if(dirty&&cached){ // unsynced offline edits win; push them now
+      const prof={...cached,email:user.email,_authUserId:user.id};
+      this.put(prof).catch(()=>{});return prof;
+    }
+    let r;try{r=await sb.from("user_data").select("data").eq("user_id",user.id).maybeSingle()}catch(e){r={error:e}}
+    if(r.error){if(netErr(r.error)&&cached)return {...cached,email:user.email,_authUserId:user.id};cloudError(r.error)}
+    if(!r.data?.data)return null;
+    const profile={...r.data.data,email:user.email,_authUserId:user.id};cacheLocalProfile(user.id,profile);lsSet(dk,profile);return profile;
   },
   async put(u){
-    const user=await this.currentUser();
+    const user=await this.currentUser(),dk="elagi.pwa.data."+user.id;
     const payload={...u,email:user.email};delete payload._authUserId;
-    const {error}=await sb.from("user_data").upsert({user_id:user.id,data:payload},{onConflict:"user_id"});
-    if(error)cloudError(error);cacheLocalProfile(user.id,payload);return user.id;
+    lsSet(dk,payload);
+    let r;try{r=await sb.from("user_data").upsert({user_id:user.id,data:payload},{onConflict:"user_id"})}catch(e){r={error:e}}
+    if(r.error){if(netErr(r.error)){lsSet(dk+".dirty",1);return user.id}cloudError(r.error)}
+    lsDel(dk+".dirty");cacheLocalProfile(user.id,payload);return user.id;
   },
   async del(){
     const user=await this.currentUser();
@@ -939,7 +963,7 @@ function renderEditor(){
   ${e.recog==="busy"?`<p class="hint" role="status">جارٍ قراءة الصورة…</p>`:""}
   ${e.recog==="found"?`<p class="hint" role="status" style="color:var(--teal-d)">تعرّفنا على الدواء من الصورة. تأكد من الاسم أدناه.</p>`:""}
   ${e.recog==="miss"?`<p class="hint" role="status">لم نتمكن من قراءة الاسم. ابحث عنه بالاسم، أو احفظ الصورة فقط.</p>`:""}
-  <label class="field"><span>اسم الدواء</span><input class="inp" id="edQ" data-e="q" placeholder="ابحث بالاسم (مثال: Concor أو كونكور)" value="${esc(e.q)}" autocomplete="off"></label>
+  <label class="field"><span>اسم الدواء</span><input class="inp" id="edQ" data-e="q" placeholder="ابحث بالعربية أو الإنجليزية (مثال: Concor أو كونكور)" value="${esc(e.q)}" autocomplete="off"></label>
   <div class="res" id="edRes">${resHtml()}</div>
   <div id="edSel">${selHtml()}</div>
   ${(!sel||e.ask)?`<div class="field"><span style="display:block;font-weight:600;font-size:14.5px;margin-bottom:6px">نوع الدواء</span><div class="chips"><button class="chip" data-a="edKind" data-v="solid" aria-pressed="${solid}">أقراص / كبسولات</button><button class="chip" data-a="edKind" data-v="liquid" aria-pressed="${!solid}">شراب / سائل / أخرى</button></div></div>`:""}
@@ -959,7 +983,7 @@ function selHtml(){
 }
 function resHtml(){
   if(!E)return"";
-  return E.matches.map(i=>`<button data-a="edPick" data-i="${i}" aria-pressed="${E.sel===i}"><span class="ltr">${esc(D[i][0])}</span><small class="ltr">${esc(D[i][1]||"")}</small></button>`).join("")||(E.q.trim().length>=2?`<p class="hint">لا توجد نتائج. اكتب الاسم بالإنجليزية كما على العلبة، أو احفظ الصورة فقط.</p>`:"");
+  return E.matches.map(i=>`<button data-a="edPick" data-i="${i}" aria-pressed="${E.sel===i}"><span class="ltr">${esc(D[i][0])}</span><small class="ltr">${esc(D[i][1]||"")}</small></button>`).join("")||(E.q.trim().length>=2?`<p class="hint">لا توجد نتائج. جرّب كتابة الاسم بالعربية أو الإنجليزية كما على العلبة، أو احفظ الصورة فقط.</p>`:"");
 }
 function pickDrug(i){
   const r=D[i];E.sel=i;E.name=r[0];E.generic=r[1];E.company=DB.c[r[2]]||"";E.pharm=DB.p[r[3]]||"";E.route=r[4];
@@ -979,7 +1003,7 @@ async function applyPhoto(file){
 function saveEditor(){
   const e=E;if(!e.name&&!e.photo&&!e.q.trim()){toast("أضف صورة الدواء أو اسمه أولًا");return}
   const solid=e.kind==="solid";
-  const m={id:e.id,name:e.name||e.q.trim()||"دواء (صورة فقط)",generic:e.generic||"",company:e.company||"",pharm:e.pharm||"",route:e.route||"",photo:e.photo||"",countable:solid,unit:solid?(e.unit||"قرص/كبسولة"):"",perDay:e.perDay,dosePer:solid?e.dosePer:1,qty:solid?e.qty:0,meal:e.meal,nextAt:0};
+  const m={id:e.id,name:e.name||e.q.trim()||"دواء (صورة فقط)",generic:e.generic||"",company:e.company||"",pharm:e.pharm||"",route:e.route||"",photo:e.photo||"",countable:solid,unit:solid?(e.unit||"قرص/كبسولة"):"",perDay:e.perDay,dosePer:solid?e.dosePer:1,qty:solid?e.qty:0,meal:e.meal,cond:e.cond||"",nextAt:0};
   const old=e.editing?(S.view==="wizard"?S.draft.meds:S.user.meds).find(x=>x.id===e.id):null;
   m.nextAt=(old&&e.sig===e.perDay+"|"+e.time)?old.nextAt:computeNextAt(e.time,e.perDay);
   const list=S.view==="wizard"?S.draft.meds:S.user.meds,ix=list.findIndex(x=>x.id===m.id);
@@ -1265,7 +1289,7 @@ disc:"هذه تقديرات للتوعية وليست تشخيصًا. استشر
 treat:"المرض والأدوية والجرعات والمواعيد",disease:"المرض / الحالة الصحية",noMeds:"لا توجد أدوية مضافة.",addMed:"إضافة دواء",next:"الجرعة القادمة",late:"متأخرة",taken:"تم أخذ الدواء",skip:"تخطي الجرعة",
 doseOf:"الجرعة",times:"المواعيد",perDay:n=>n===1?"مرة يوميًا":n===2?"مرتان يوميًا":n+" مرات يوميًا",
 testsT:"التحاليل التي أجريتها",noTests:"لا توجد تحاليل مسجلة بعد.",all:"عرض الكل",measT:"مؤشر كتلة الجسم وقياسات الجسم ومساحة السطح",
-noMeas:"أضف طولك ووزنك لحساب مؤشر كتلة الجسم ومساحة السطح وتوزيع الدهون.",openMeas:"فتح قياسات الجسم",refill:"جدّد الدواء قريبًا.",pdf:"تنزيل كملف PDF",pdfWait:"جارٍ تجهيز الملف…",pdfErr:"تعذّر إنشاء الملف — تحقق من الاتصال بالإنترنت",pdfTitle:"الملخص الصحي",pdfApp:"حمّل تطبيق عِلاجي",pdfScan:"امسح الرمز أو افتح الرابط"},
+noMeas:"أضف طولك ووزنك لحساب مؤشر كتلة الجسم ومساحة السطح وتوزيع الدهون.",openMeas:"فتح قياسات الجسم",refill:"جدّد الدواء قريبًا.",pdf:"تنزيل كملف PDF",pdfWait:"جارٍ تجهيز الملف…",pdfErr:"تعذّر إنشاء الملف — تحقق من الاتصال بالإنترنت",pdfTitle:"الملخص الصحي",pdfApp:"حمّل تطبيق عِلاجي",pdfScan:"امسح الرمز أو افتح الرابط",apple:"تفاحي",pear:"كمثري",bioT:"القفل بالبصمة",bioSub:"اطلب البصمة أو قفل الشاشة عند فتح التطبيق",bioOn:"تفعيل",bioOff:"إيقاف",bioUnlock:"افتح بالبصمة",bioHint:"أكّد هويتك لفتح عِلاجي",bioEnabled:"تم تفعيل القفل بالبصمة",bioDisabled:"تم إيقاف القفل",bioNo:"جهازك أو متصفحك لا يدعم البصمة هنا",bioFail:"لم يتم التحقق. حاول مرة أخرى.",pushT:"إشعارات عند إغلاق التطبيق",pushSub:"تصلك تذكيرات الجرعات والتحاليل حتى والتطبيق مغلق",pushOn:"تفعيل",pushOff:"إيقاف",pushOk:"تم تفعيل الإشعارات على هذا الجهاز",pushDenied:"تم رفض إذن الإشعارات. فعّله من إعدادات المتصفح.",pushNo:"هذا الجهاز لا يدعم الإشعارات. على آيفون ثبّت التطبيق على الشاشة الرئيسية أولًا.",pushErr:"تعذّر تفعيل الإشعارات",pushStopped:"تم إيقاف الإشعارات",myMeds:"أدويتي",addDz:"إضافة مرض",dzName:"اسم المرض",dzPh:"مثال: السكري، الضغط",dzSave:"حفظ المرض",dzNone:"أدوية بدون مرض محدد",dzEmpty:"لم تُضف أدوية لهذا المرض بعد.",dzDel:"حذف المرض",dzDelQ:"حذف هذا المرض؟ ستبقى أدويته ضمن «أدوية بدون مرض محدد».",cancel:"إلغاء",remain:"المتبقي",lasts:"يكفي ~",dayW:"يوم",edit:"تعديل",del:"حذف",dzStart:"ابدأ بإضافة مرض، ثم أضف الأدوية التي تعالجه دواءً دواءً."},
 en:{title:"Body measurements",open:"Body measurements & surface area",sub:"BMI, surface area, fat distribution",btn:"Open",lang:"App language",sex:"Sex",m:"Male",f:"Female",
 h:"Height (cm)",w:"Weight (kg)",neck:"Neck circumference (cm)",waist:"Waist circumference (cm)",hip:"Hip circumference (cm)",
 how_h:"Stand straight and barefoot with your back to a wall. Measure from the floor to the top of the head.",
@@ -1282,7 +1306,7 @@ disc:"These are estimates for awareness, not a diagnosis. Ask your doctor before
 treat:"Condition, medicines, doses & times",disease:"Condition",noMeds:"No medicines added.",addMed:"Add medicine",next:"Next dose",late:"Overdue",taken:"Taken",skip:"Skip dose",
 doseOf:"Dose",times:"Times",perDay:n=>n+"× daily",
 testsT:"Tests you've done",noTests:"No test results yet.",all:"View all",measT:"BMI, body measurements & surface area",
-noMeas:"Add your height and weight to calculate BMI, surface area and fat distribution.",openMeas:"Open body measurements",refill:"Refill soon.",pdf:"Download PDF",pdfWait:"Preparing the file…",pdfErr:"Couldn't create the file — check your connection",pdfTitle:"Health summary",pdfApp:"Get the Elagi app",pdfScan:"Scan the code or open the link"}};
+noMeas:"Add your height and weight to calculate BMI, surface area and fat distribution.",openMeas:"Open body measurements",refill:"Refill soon.",pdf:"Download PDF",pdfWait:"Preparing the file…",pdfErr:"Couldn't create the file — check your connection",pdfTitle:"Health summary",pdfApp:"Get the Elagi app",pdfScan:"Scan the code or open the link",apple:"Apple",pear:"Pear",bioT:"Fingerprint lock",bioSub:"Ask for fingerprint or screen lock when opening the app",bioOn:"Enable",bioOff:"Turn off",bioUnlock:"Unlock with fingerprint",bioHint:"Confirm it's you to open Elagi",bioEnabled:"Fingerprint lock enabled",bioDisabled:"Lock turned off",bioNo:"Your device or browser doesn't support this here",bioFail:"Couldn't verify. Try again.",pushT:"Notifications when the app is closed",pushSub:"Get dose and test reminders even when the app is closed",pushOn:"Enable",pushOff:"Turn off",pushOk:"Notifications enabled on this device",pushDenied:"Notification permission denied. Enable it in browser settings.",pushNo:"This device doesn't support notifications. On iPhone, add the app to the Home Screen first.",pushErr:"Couldn't enable notifications",pushStopped:"Notifications turned off",myMeds:"My medicines",addDz:"Add condition",dzName:"Condition name",dzPh:"e.g. Diabetes, Hypertension",dzSave:"Save condition",dzNone:"Medicines without a condition",dzEmpty:"No medicines added for this condition yet.",dzDel:"Delete condition",dzDelQ:"Delete this condition? Its medicines will be kept under \"Medicines without a condition\".",cancel:"Cancel",remain:"Remaining",lasts:"lasts ~",dayW:"days",edit:"Edit",del:"Delete",dzStart:"Start by adding a condition, then add the medicines that treat it, one by one."}};
 const K=["h","w","neck","waist","hip"];
 let LANG="ar";try{LANG=localStorage.getItem("elagi.lang")==="en"?"en":"ar"}catch{}window.ELANG=LANG;
 const lg=()=>LANG,t=k=>TX[lg()][k],dir=()=>LANG==="en"?"ltr":"rtl";
@@ -1336,6 +1360,17 @@ const fld=k=>`<div class="field"><div style="display:flex;gap:12px;align-items:c
 
 function bmRead(){const b=S.user.body=S.user.body||{};for(const k of K){const e=document.getElementById("bm_"+k);if(e)b[k]=num(e.value)}return b}
 function bmUpdate(){const b=bmRead(),r=document.getElementById("bmRes");if(r)r.innerHTML=resHtml(b);const h=document.getElementById("bmHist");if(h)h.innerHTML=histHtml(b)}
+function resCompact(b){
+  const r=calc(b),d="—",m=b.sex==="m",row=(l,v)=>`<div class="kv"><span>${l}</span><b>${v}</b></div>`,L=x=>`<span class="ltr">${x}</span>`;
+  const bi=r?(r.bmi<18.5?0:r.bmi<25?1:r.bmi<30?2:3):0;
+  let h=row(t("wLbl"),b.w?`${L(b.w)} ${t("kg")}`:d)+row(t("hLbl"),b.h?`${L(b.h)} ${t("cm")}`:d);
+  if(!r)return h+`<p class="hint" style="margin:8px 0 0">${t("noMeas")}</p>`;
+  h+=row(t("bmi"),`${L(f1(r.bmi))} — ${t("bmiN")[bi]}`)+row(t("bsa"),`${L(f1(r.bsaM,2))} m²`);
+  if(r.whr!=null)h+=row(t("whr"),`${L(f1(r.whr,2))}${b.sex?` — ${r.whr>=(m?.9:.85)?t("apple"):t("pear")}`:""}`);
+  if(r.whtr!=null)h+=row(t("whtr"),L(f1(r.whtr,2)));
+  if(r.bf!=null)h+=row(t("bf"),`${L(f1(r.bf))}%`)+row(t("fm"),`${L(f1(r.fm))} ${t("kg")}`)+row(t("lm"),`${L(f1(r.lm))} ${t("kg")}`);
+  return h;
+}
 function bmPage(){
   const u=S.user,b=u.body=u.body||{};
   if(!b.sex)b.sex=u.gender==="ذكر"?"m":u.gender==="أنثى"?"f":"";
@@ -1366,7 +1401,7 @@ async function homePdf(){
     sh.querySelector(".pdfbody").appendChild(clone);document.body.appendChild(sh);
     if(document.fonts&&document.fonts.ready)await document.fonts.ready;
     const pages=Math.max(1,Math.ceil((sh.scrollHeight+FH+24)/H));sh.style.height=pages*H+"px";
-    for(let i=0;i<pages;i++)sh.insertAdjacentHTML("afterbegin",`<div style="position:absolute;left:0;top:${i*H}px;width:${W}px;height:${H}px;overflow:hidden;z-index:0"><div style="position:absolute;left:${(W-340)/2}px;top:${(H-340)/2}px;opacity:.09">${lg(340)}</div><div style="position:absolute;left:0;right:0;top:${H/2-90}px;text-align:center;font-size:150px;font-weight:700;line-height:180px;color:#04A093;opacity:.07;transform:rotate(-30deg);white-space:nowrap;direction:ltr">${name}</div></div>`);
+    for(let i=0;i<pages;i++)sh.insertAdjacentHTML("afterbegin",`<div style="position:absolute;left:0;top:${i*H}px;width:${W}px;height:${H}px;overflow:hidden;z-index:0"><div style="position:absolute;left:0;top:${H/2-250}px;width:${W}px;text-align:center;opacity:.09"><div style="display:inline-block">${lg(300)}</div><div style="margin-top:6px;font-size:60px;line-height:76px;font-weight:700;color:#04A093;direction:ltr">${name}</div></div></div>`);
     sh.insertAdjacentHTML("beforeend",`<div style="position:absolute;left:44px;right:44px;bottom:32px;z-index:1;border-top:2px solid #E1E8E9;padding-top:16px;display:flex;align-items:center;gap:18px"><img src="${q.createDataURL(6,2)}" width="110" height="110" style="image-rendering:pixelated;flex:none" alt=""><div style="flex:1;min-width:0"><div style="font-weight:700;font-size:17px;color:#037A70">${t("pdfApp")}</div><div style="font-size:12.5px;color:#5E6A70;margin:2px 0 4px">${t("pdfScan")}</div><div style="direction:ltr;text-align:start;font-size:14px;color:#3D464B;word-break:break-all">${APP_URL}</div><div style="font-size:11.5px;color:#5E6A70;margin-top:8px">${t("disc")}</div></div></div>`);
     const cv=await html2canvas(sh,{scale:2,backgroundColor:"#ffffff",useCORS:true,width:W,height:pages*H,windowWidth:W});
     sh.remove();
@@ -1377,6 +1412,12 @@ async function homePdf(){
 }
 Object.assign(ACT,{
   homePdf(){homePdf()},
+  dzAddOpen(){openSheet(`<div dir="${dir()}"><div class="sheet-h"><h3>${t("addDz")}</h3><button class="icon-btn" data-a="sheetClose" aria-label="x">${ic("x")}</button></div><label class="field"><span>${t("dzName")}</span><input class="inp" id="dzIn" placeholder="${t("dzPh")}" autocomplete="off" style="width:100%"></label><button class="btn primary" data-a="dzAdd">${t("dzSave")}</button></div>`);setTimeout(()=>{const e=document.getElementById("dzIn");e&&e.focus()},60)},
+  async dzAdd(){const e=document.getElementById("dzIn"),v=((e&&e.value)||"").trim();if(!v){toast(t("dzName"));return}const u=S.user;u.cond=u.cond||[];if(!u.cond.some(c=>c.toLowerCase()===v.toLowerCase()))u.cond.push(v);await persist();closeSheet();render()},
+  dzMed(el){const n=(S.user.cond||[])[+el.dataset.i];if(n==null)return;E=newEditor();E.cond=n;renderEditor()},
+  dzDel(el){const i=+el.dataset.i,n=(S.user.cond||[])[i];if(n==null)return;openSheet(`<div dir="${dir()}"><div class="sheet-h"><h3>${t("dzDel")}</h3><button class="icon-btn" data-a="sheetClose" aria-label="x">${ic("x")}</button></div><p>${esc(n)}</p><p class="hint">${t("dzDelQ")}</p><div class="row2"><button class="btn ghost" data-a="sheetClose">${t("cancel")}</button><button class="btn primary" data-a="dzDelYes" data-i="${i}">${t("dzDel")}</button></div></div>`)},
+  async dzDelYes(el){const u=S.user,i=+el.dataset.i,n=(u.cond||[])[i];if(n==null)return;u.cond.splice(i,1);(u.meds||[]).forEach(m=>{if(m.cond===n)m.cond=""});await persist();closeSheet();render()},
+
   bmOpen(){ACT.tab({dataset:{v:"tips"}})},
   bmSex(el){const b=bmRead();b.sex=el.dataset.v;document.querySelectorAll("[data-a=bmSex]").forEach(x=>x.setAttribute("aria-pressed",x===el));bmUpdate()},
   bmLang(el){if(document.querySelector(".bm"))bmRead();setLang(el.dataset.v)},
@@ -1410,32 +1451,168 @@ const unitTxt=u=>LANG==="en"&&u==="قرص/كبسولة"?"tablet/capsule":u;
 const lnk=(a,txt,v)=>`<button class="btn quiet" style="width:auto;min-height:32px;padding:0 6px" data-a="${a}"${v?` data-v="${v}"`:""}>${txt}</button>`;
 const card=(title,act,inner)=>`<div class="card" style="margin:0 0 14px"><div class="sec" style="margin:0 0 10px"><h3>${title}</h3>${act||""}</div>${inner}</div>`;
 const row=(l,v)=>`<div class="kv"><span>${l}</span><b>${v}</b></div>`,dash="—";
+const dzGroups=u=>{const g=(u.cond||[]).filter(Boolean).map(n=>({n,m:[]})),oth=[];for(const m of u.meds||[]){const x=g.find(y=>y.n===m.cond);(x?x.m:oth).push(m)}return{g,oth}};
 tabDoses=function(){
   const u=S.user,b=Object.assign({},u.body||{}),meds=u.meds||[],n=nextDose();
   if(!b.sex)b.sex=u.gender==="ذكر"?"m":u.gender==="أنثى"?"f":"";
   const p=card(t("personal"),lnk("editProfile",t("editP")),
     row(t("name"),esc(`${u.first||""} ${u.last||""}`.trim())||dash)+row(t("age"),u.age?`<span class="ltr">${esc(u.age)}</span> ${t("yrs")}`:dash)+
     row(t("phone"),u.phone?`<span class="ltr">${esc(u.phone)}</span>`:dash));
-  const cond=(u.cond||[]).filter(Boolean);let tr=row(t("disease"),cond.length?esc(cond.join(LANG==="en"?", ":"، ")):dash);
-  if(!meds.length||!n)tr+=`<p class="hint" style="margin:10px 0">${t("noMeds")}</p><button class="btn primary" data-a="addMedHome">${t("addMed")}</button>`;
+  const {g,oth}=dzGroups(u);let tr=g.length?"":row(t("disease"),dash);
+  const medItem=m=>`<div class="item">${medTh(m)}<div class="tx"><b class="ltr">${esc(m.name)}</b><small>${t("doseOf")}: ${m.countable?`<span class="ltr">${m.dosePer}</span> ${esc(unitTxt(m.unit))} • `:""}${t("perDay")(m.perDay)}</small><small>${t("times")}: <span class="ltr">${slots(m).join(" • ")}</span></small>${meal(m.meal)?`<small>${meal(m.meal)}</small>`:""}</div></div>`;
+  const sec=(title,ms)=>`<div style="margin-top:14px"><div style="font-weight:700;color:var(--teal-d);margin-bottom:6px">${title}</div>${ms.length?`<div class="list">${ms.map(medItem).join("")}</div>`:`<p class="hint" style="margin:0">${t("dzEmpty")}</p>`}</div>`;
+  const grp=g.map(x=>sec(esc(x.n),x.m)).join("")+(oth.length?sec(g.length?t("dzNone"):t("disease"),oth):"");
+  if(!meds.length||!n)tr+=grp+`<p class="hint" style="margin:10px 0">${t("noMeds")}</p><button class="btn primary" data-a="addMedHome">${t("addMed")}</button>`;
   else{
     const late=n.nextAt<=Date.now(),dw=dayW(n.nextAt);
     tr+=`<div class="next" style="margin-top:12px">${late?`<span class="late">${t("late")}</span><br>`:""}<div class="when">${t("next")}: ${dw?dw+" ":""}${tm(n.nextAt)}</div><div class="med ltr" style="display:block;text-align:center">${esc(n.name)}</div><div class="meal">${meal(n.meal)||"&nbsp;"}</div></div>
 <div class="acts"><button class="act ok" data-a="doseTaken" data-id="${esc(n.id)}"><b>${ic("check")}</b>${t("taken")}</button><button class="act no" data-a="doseSkip" data-id="${esc(n.id)}"><b>${ic("x")}</b>${t("skip")}</button></div>`;
     tr+=meds.filter(m=>m.countable&&m.qty/(m.perDay*(m.dosePer||1))<=5).map(m=>{const d=Math.floor(m.qty/(m.perDay*(m.dosePer||1))),nmz=`<b class="ltr">${esc(m.name)}</b>`;
       return `<div class="low"><span style="font-size:22px">${ic("warn")}</span><div>${LANG==="en"?(m.qty<=0?`${nmz} is out of stock.`:`${nmz} lasts about ${d} day${d===1?"":"s"}.`):(m.qty<=0?`نفد ${nmz}.`:`المتبقي من ${nmz} يكفي حوالي ${d} يوم.`)} ${t("refill")}</div></div>`}).join("");
-    tr+=`<div class="list" style="margin-top:12px">${meds.slice().sort((a,c)=>a.nextAt-c.nextAt).map(m=>`<div class="item">${medTh(m)}<div class="tx"><b class="ltr">${esc(m.name)}</b><small>${t("doseOf")}: ${m.countable?`<span class="ltr">${m.dosePer}</span> ${esc(unitTxt(m.unit))} • `:""}${t("perDay")(m.perDay)}</small><small>${t("times")}: <span class="ltr">${slots(m).join(" • ")}</span></small>${meal(m.meal)?`<small>${meal(m.meal)}</small>`:""}</div></div>`).join("")}</div>`;
+    tr+=grp;
   }
   const tc=card(t("treat"),"",tr);
   const done=(u.tests||[]).filter(x=>(x.results||[]).length).sort((a,c)=>c.results.slice(-1)[0].ts-a.results.slice(-1)[0].ts).slice(0,4);
   const ts=card(t("testsT"),done.length?lnk("tab",t("all"),"tests"):"",done.length?`<div class="list">${done.map(x=>{const r=x.results.slice(-1)[0];return `<div class="item"><div class="th">${ic(x.kind==="bp"?"heart":"flask",24)}</div><div class="tx"><b>${esc(nm(x))}</b><small class="ltr">${esc(rTxt(x,r))}</small><small>${new Date(r.ts).toLocaleDateString(loc(),{day:"numeric",month:"long",year:"numeric"})}</small></div></div>`}).join("")}</div>`:`<p class="hint" style="margin:0">${t("noTests")}</p>`);
-  const ms=card(t("measT"),"",row(t("wLbl"),b.w?`<span class="ltr">${b.w}</span> ${t("kg")}`:dash)+row(t("hLbl"),b.h?`<span class="ltr">${b.h}</span> ${t("cm")}`:dash)+(b.h&&b.w?resHtml(b):`<p class="hint" style="margin:8px 0 10px">${t("noMeas")}</p>`)+`<button class="btn ghost" style="margin-top:8px" data-a="tab" data-v="tips">${t("openMeas")}</button>`);
+  const ms=card(t("bmi"),"",resCompact(b)+`<button class="btn ghost" style="margin-top:8px" data-a="tab" data-v="tips">${t("openMeas")}</button>`);
   return `<div dir="${dir()}"><div class="no-pdf" style="display:flex;justify-content:flex-end;margin-bottom:12px"><button class="btn ghost" style="width:auto;min-height:40px;padding:0 16px" data-a="homePdf">${t("pdf")}</button></div>${p}${tc}${ts}${ms}</div>`;
 };
+
+tabMeds=function(){
+  const u=S.user,{g,oth}=dzGroups(u);
+  const item=m=>{const d=m.countable?Math.floor(m.qty/(m.perDay*(m.dosePer||1))):0;
+    return `<div class="item">${medTh(m)}<div class="tx"><b class="ltr">${esc(m.name)}</b><small>${t("perDay")(m.perDay)} • ${t("next")}: ${tm(m.nextAt)}</small>${m.generic?`<small class="ltr">${esc(m.generic)}</small>`:""}${m.countable?`<small>${t("remain")} <span class="ltr">${nfa(m.qty)}</span> ${esc(unitTxt(m.unit||""))} (${t("lasts")} <span class="ltr">${d}</span> ${t("dayW")})</small>`:""}</div><button class="icon-btn" data-a="editMed" data-id="${esc(m.id)}" aria-label="${t("edit")}">${ic("edit",20)}</button><button class="icon-btn" data-a="delMed" data-id="${esc(m.id)}" aria-label="${t("del")}">${ic("trash",20)}</button></div>`};
+  const box=(title,act,ms,add)=>card(title,act,(ms.length?`<div class="list">${ms.map(item).join("")}</div>`:`<p class="hint" style="margin:0 0 10px">${t("dzEmpty")}</p>`)+add);
+  const addBtn=(a,i,c)=>`<button class="btn ${c}" style="width:100%;margin-top:8px" data-a="${a}"${i!=null?` data-i="${i}"`:""}>${ic("plus",18)} ${t("addMed")}</button>`;
+  return `<div dir="${dir()}"><div class="sec"><h3>${t("myMeds")} (${nfa((u.meds||[]).length)})</h3></div>
+<button class="btn primary" style="width:100%;margin-bottom:14px" data-a="dzAddOpen">${ic("plus",18)} ${t("addDz")}</button>
+${!g.length&&!oth.length?`<p class="hint">${t("dzStart")}</p>`:""}
+${g.map((x,i)=>box(esc(x.n),`<button class="icon-btn" data-a="dzDel" data-i="${i}" aria-label="${t("dzDel")}">${ic("trash",20)}</button>`,x.m,addBtn("dzMed",i,"ghost"))).join("")}
+${oth.length?box(t("dzNone"),"",oth,addBtn("addManual",null,"quiet")):""}</div>`;
+};
+}
+
+/* ===== Arabic/English drug search ===== */
+{
+const AM={"ب":"b","پ":"b","ت":"t","ط":"t","ث":"s","س":"s","ص":"s","ز":"s","ظ":"s","ذ":"s","ش":"s","ج":"g","غ":"g","گ":"g","ح":"h","ه":"h","خ":"k","ق":"k","ك":"k","د":"d","ض":"d","ر":"r","ف":"f","ل":"l","م":"m","ن":"n"};
+const skAr=w=>{let o="";for(const ch of w.replace(/[\u064B-\u065F\u0670\u0640]/g,"")){const m=AM[ch];if(m&&m!==o.slice(-1))o+=m}return o.replace(/h$/,"")};
+const skLa=w=>w.toLowerCase().replace(/[^a-z]/g,"").replace(/ph/g,"f").replace(/ck/g,"k").replace(/ch|kh/g,"k").replace(/sch|sh/g,"s").replace(/th/g,"t").replace(/c(?=[eiy])/g,"s").replace(/[cq]/g,"k").replace(/x/g,"ks").replace(/p/g,"b").replace(/v/g,"f").replace(/j/g,"g").replace(/z/g,"s").replace(/[aeiouyw]/g,"").replace(/(.)\1+/g,"$1").replace(/h$/,"");
+let SK=null;
+const buildSK=()=>{SK=NU.map((n,i)=>{const s=new Set();for(const w of (n+" "+GU[i]).split(/[^A-Z]+/))if(w.length>=3){const k=skLa(w);if(k.length>=2)s.add(k)}return[...s]})};
+function arSearch(q,limit){
+  const qs=q.split(/\s+/).map(w=>/[\u0600-\u06FF]/.test(w)?skAr(w):skLa(w)).filter(s=>s.length>=2);
+  if(!qs.length)return[];if(!SK)buildSK();
+  const res=[];
+  for(let i=0;i<SK.length;i++){const ks=SK[i];let s=0;
+    for(const x of qs){let b=0;for(let j=0;j<ks.length;j++){const k=ks[j];if(k===x)b=Math.max(b,j===0?10:6);else if(k.startsWith(x))b=Math.max(b,j===0?7:4);else if(x.length>=3&&k.includes(x))b=Math.max(b,1)}if(!b){s=0;break}s+=b}
+    if(s)res.push([s,i])}
+  res.sort((a,b)=>b[0]-a[0]||NU[a[1]].length-NU[b[1]].length);return res.slice(0,limit).map(x=>x[1]);
+}
+const sd=searchDrugs;
+searchDrugs=function(q,limit=8){const r=sd(q,limit);if(!/[\u0600-\u06FF]/.test(q||"")||r.length>=limit)return r;const seen=new Set(r);for(const i of arSearch((q||"").trim(),limit*2)){if(r.length>=limit)break;if(!seen.has(i)){r.push(i);seen.add(i)}}return r};
+window.__arSearch=arSearch;
+}
+/* ===== Smoother, clearer alert sound + voice ===== */
+{
+let AC=null;
+beep=function(){
+  try{
+    AC=AC||new (window.AudioContext||window.webkitAudioContext)();const a=AC;if(a.state==="suspended")a.resume();
+    const t0=a.currentTime+.04,out=a.createGain(),comp=a.createDynamicsCompressor(),dl=a.createDelay(.6),fb=a.createGain(),wet=a.createGain();
+    out.gain.value=.85;dl.delayTime.value=.27;fb.gain.value=.3;wet.gain.value=.32;
+    out.connect(comp);out.connect(dl);dl.connect(fb);fb.connect(dl);dl.connect(wet);wet.connect(comp);comp.connect(a.destination);
+    const note=(f,at)=>{[[1,.5,"sine"],[2,.14,"sine"],[3,.05,"sine"]].forEach(([m,v,ty])=>{const o=a.createOscillator(),g=a.createGain(),s=t0+at;o.type=ty;o.frequency.value=f*m;
+      g.gain.setValueAtTime(0,s);g.gain.linearRampToValueAtTime(v,s+.015);g.gain.exponentialRampToValueAtTime(.0008,s+1.15);o.connect(g);g.connect(out);o.start(s);o.stop(s+1.25)})};
+    [0,1.05].forEach(r=>[659.25,783.99,1046.5].forEach((f,i)=>note(f,r+i*.2)));
+  }catch{}
+  navigator.vibrate&&navigator.vibrate([200,100,200]);
+};
+let VS=[];const loadV=()=>{try{VS=speechSynthesis.getVoices()||[]}catch{}};loadV();try{speechSynthesis.addEventListener("voiceschanged",loadV)}catch{}
+const nl=v=>v.lang.toLowerCase().replace("_","-"),sc=v=>{const n=(v.name||"").toLowerCase();return(/google|natural|neural|premium|enhanced|online/.test(n)?3:0)+(v.localService?0:1)-(/compact|espeak/.test(n)?3:0)};
+const pick=lang=>{const l=lang.toLowerCase().replace("_","-"),c=VS.filter(v=>nl(v).startsWith(l.slice(0,2)));c.sort((a,b)=>((nl(b)===l)-(nl(a)===l))*5+sc(b)-sc(a));return c[0]||null};
+Voice.say=function(parts){try{
+  if(!("speechSynthesis"in window)||S.user?.set?.voice===false)return;
+  speechSynthesis.cancel();loadV();
+  for(const p of parts){if(!p.t)continue;const u=new SpeechSynthesisUtterance(p.t);u.lang=p.lang;const v=pick(p.lang);if(v)u.voice=v;u.rate=.85;u.pitch=1;u.volume=1;speechSynthesis.speak(u)}
+}catch{}};
+alarmSpeak=function(){
+  if(!A)return;beep();
+  const u=S.user,who=u.first,isMed=A.kind==="med",en=LANG==="en";
+  setTimeout(()=>{if(!A)return;Voice.say(en?[
+    {t:isMed?"Don't forget your medicine dose.":"It's time for",lang:"en-US"},{t:isMed?shortName(A.name):A.name,lang:"en-US"},{t:who,lang:hasAr(who)?"ar-SA":"en-US"}]:[
+    {t:isMed?"لا تنسَ جرعة دواء":"حان موعد",lang:"ar-SA"},{t:isMed?shortName(A.name):A.name,lang:isMed||!hasAr(A.name)?"en-US":"ar-SA"},{t:"يا",lang:"ar-SA"},{t:who,lang:hasAr(who)?"ar-SA":"en-US"}])},1100);
+};
+}
+
+/* ===== Local fingerprint lock (WebAuthn platform authenticator) ===== */
+{
+const BK="elagi.bio",b64=u=>btoa(String.fromCharCode(...new Uint8Array(u))),unb=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+const rnd=n=>crypto.getRandomValues(new Uint8Array(n));
+let BIO_OK=false;try{PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable().then(v=>{BIO_OK=!!v})}catch{}
+const bioId=()=>{try{return localStorage.getItem(BK)}catch{return null}};
+let lockEl=null,unlocking=false,lastHide=0;
+function showLock(){
+  if(!bioId()||lockEl)return;
+  lockEl=document.createElement("div");lockEl.id="bioLock";lockEl.dir=dir();
+  lockEl.style.cssText="position:fixed;inset:0;z-index:50;background:var(--bg,#F6F9F9);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:24px;text-align:center;color:var(--ink,#3D464B);font-family:var(--font)";
+  lockEl.innerHTML=`${logo(96)}<div style="font-size:24px;font-weight:700;color:var(--teal-d,#037A70)">${LANG==="en"?"Elagi":"عِلاجي"}</div><p style="margin:0;color:var(--ink-2,#5E6A70)">${t("bioHint")}</p><button class="btn primary" style="width:auto;padding:0 28px" data-a="bioUnlock">${ic("fp",22)} ${t("bioUnlock")}</button>`;
+  document.body.appendChild(lockEl);setTimeout(unlock,250);
+}
+async function unlock(){
+  if(unlocking||!lockEl)return;unlocking=true;
+  try{
+    const id=bioId();if(!id){lockEl.remove();lockEl=null;return}
+    const r=await navigator.credentials.get({publicKey:{challenge:rnd(32),allowCredentials:[{id:unb(id),type:"public-key",transports:["internal"]}],userVerification:"required",timeout:60000}});
+    if(r){lockEl.remove();lockEl=null}
+  }catch(e){console.warn("bio unlock",e);if(e&&e.name==="InvalidStateError"||e&&e.name==="NotFoundError")toast(t("bioFail"))}
+  unlocking=false;
+}
+async function enableBio(){
+  if(!window.isSecureContext||!navigator.credentials||!BIO_OK){toast(t("bioNo"));return}
+  try{
+    const c=await navigator.credentials.create({publicKey:{challenge:rnd(32),rp:{name:"Elagi"},user:{id:rnd(16),name:"elagi-device",displayName:"Elagi"},pubKeyCredParams:[{type:"public-key",alg:-7},{type:"public-key",alg:-257}],authenticatorSelection:{authenticatorAttachment:"platform",userVerification:"required",residentKey:"discouraged"},timeout:60000,attestation:"none"}});
+    localStorage.setItem(BK,b64(c.rawId));toast(t("bioEnabled"));render();
+  }catch(e){console.warn("bio enable",e);toast(e&&e.name==="NotAllowedError"?t("bioFail"):t("bioNo"))}
+}
+const off=()=>{try{localStorage.removeItem(BK)}catch{}if(lockEl){lockEl.remove();lockEl=null}};
+const oc=clearLocalProfile;clearLocalProfile=function(id){off();return oc(id)};
+Object.assign(ACT,{bioUnlock(){unlock()},bioOn(){enableBio()},bioOff(){off();toast(t("bioDisabled"));render()},
+  logout:(f=>async function(){await f.apply(this,arguments);if(!S.user)off()})(ACT.logout)});
+const sa=showAlarm,ca=closeAlarm;
+showAlarm=function(){if(lockEl)lockEl.style.display="none";return sa.apply(this,arguments)};
+closeAlarm=function(){const r=ca.apply(this,arguments);if(lockEl)lockEl.style.display="flex";return r};
+document.addEventListener("visibilitychange",()=>{if(document.hidden)lastHide=Date.now();else if(bioId()&&lastHide&&Date.now()-lastHide>60000&&S.user){showLock()}});
+window.__bio={has:()=>!!bioId(),ok:()=>BIO_OK};
+showLock();
+}
+/* ===== Web Push (closed-app reminders) ===== */
+{
+const VAPID="BAufWhozi4VBtelE7c07rnpaSI2ygE9Hx0GikhJ1mQBpqUCL99UjAZsTlzRTtjJpIud7mr9YheIq3wqwsELLv-Q";
+const u8=s=>{const p="=".repeat((4-s.length%4)%4),r=atob((s+p).replace(/-/g,"+").replace(/_/g,"/"));return Uint8Array.from(r,c=>c.charCodeAt(0))};
+const supported=()=>"serviceWorker"in navigator&&"PushManager"in window&&"Notification"in window&&window.isSecureContext;
+async function reg(){return navigator.serviceWorker.getRegistration().then(r=>r||navigator.serviceWorker.ready)}
+async function enablePush(){
+  if(!supported()){toast(t("pushNo"));return}
+  try{
+    const perm=await Notification.requestPermission();if(perm!=="granted"){toast(t("pushDenied"));return}
+    const r=await navigator.serviceWorker.ready;let sub=await r.pushManager.getSubscription();
+    if(!sub)sub=await r.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:u8(VAPID)});
+    S.user.push=JSON.parse(JSON.stringify(sub));S.user.tz=Intl.DateTimeFormat().resolvedOptions().timeZone||"";
+    if(await persist()){toast(t("pushOk"));render()}
+  }catch(e){console.warn("push",e);toast(t("pushErr"))}
+}
+async function disablePush(){
+  try{const r=await navigator.serviceWorker.ready,s=await r.pushManager.getSubscription();if(s)await s.unsubscribe()}catch{}
+  S.user.push=null;await persist();toast(t("pushStopped"));render();
+}
+Object.assign(ACT,{pushOn(){enablePush()},pushOff(){disablePush()}});
+window.__push={supported};
 }
 const ts=tabSettings;
 tabSettings=function(){
-  const card=`<div class="card" style="margin-bottom:14px" dir="${dir()}">${langBar()}</div>`;
+  const bioOn=window.__bio&&window.__bio.has(),pushOn=!!(S.user&&S.user.push);
+  const srow=(ti,su,on,aOn,aOff,show)=>show?`<div class="sw" style="margin-top:12px"><div>${ti}<small>${su}</small></div><button class="btn ${on?"ghost":"quiet"}" style="width:auto;min-height:40px" data-a="${on?aOff:aOn}">${on?t(aOff):t(aOn)}</button></div>`:"";
+  const card=`<div class="card" style="margin-bottom:14px" dir="${dir()}">${langBar()}${srow(t("bioT"),t("bioSub"),bioOn,"bioOn","bioOff",window.__bio&&window.__bio.ok())}${srow(t("pushT"),t("pushSub"),pushOn,"pushOn","pushOff",window.__push&&window.__push.supported())}</div>`;
   const mark='<div style="display:grid;gap:10px"><button class="btn ghost" data-a="logout">',h=ts();
   return h.includes(mark)?h.replace(mark,card+mark):h+card;
 };
@@ -1568,7 +1745,7 @@ const D=[["عِلاجي","Elagi"],
 ["تسجيل الخروج","Sign out"],
 ["حذف الحساب وبياناتي","Delete account and my data"],
 ["(7 أيام)","(7 days)"],
-["الرئيسية","Home"],["القياسات","Body"],["قرص/كبسولة","tablet/capsule"],
+["الرئيسية","Home"],["القياسات","Body"],["لا تنسَ جرعة دواء","Don't forget your medicine dose"],["حان موعد","It's time for"],["ذكّرني بعد 10 دقائق","Remind me in 10 minutes"],["سجّل النتيجة","Record result"],["تخطي","Skip"],["قرص/كبسولة","tablet/capsule"],
 ["العربية","العربية"]];
 const norm=s=>s.replace(/[\u064B-\u0652\u0670]/g,""),AR=/[\u0600-\u06FF]/;
 const M=D.map(([a,e])=>[norm(a),e]).sort((x,y)=>y[0].length-x[0].length),EX=new Map(M);
@@ -1602,6 +1779,19 @@ new MutationObserver(ms=>{
 }).observe(document.body,{childList:true,subtree:true,characterData:true});
 applyLang();
 }
+})();
+</script>
+<script>
+/* ===== PWA: service worker + connectivity notices ===== */
+(()=>{
+const en=()=>window.ELANG==="en";
+if("serviceWorker"in navigator&&(location.protocol==="https:"||location.hostname==="localhost")){
+  addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(e=>console.warn("SW registration failed",e)));
+}
+addEventListener("offline",()=>{try{toast(en()?"You're offline — changes are saved on this device":"أنت غير متصل — تُحفظ التغييرات على جهازك")}catch{}});
+addEventListener("online",async()=>{
+  try{if(S.user&&sb){const ok=await persist();toast(ok?(en()?"Back online — data synced":"عاد الاتصال — تمت المزامنة"):"")}}catch{}
+});
 })();
 </script>
 </body>
