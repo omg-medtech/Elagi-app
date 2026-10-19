@@ -1050,9 +1050,9 @@ const ACT={
     S.busy=true;S.err="";render();
     try{
       const {data}=await Cloud.signUp(email,password,first,last);
-      if(!data?.user)throw new Error("تعذر إنشاء الحساب.");
-      if(!data.session&&Array.isArray(data.user.identities)&&data.user.identities.length===0)throw new Error("User already registered");
-      if(data.session){S.signup={first:"",last:"",email:""};await resumeAccount(data.user);return}
+      const newUser=data?.user||null;
+      if(newUser&&!data?.session&&Array.isArray(newUser.identities)&&newUser.identities.length===0)throw new Error("User already registered");
+      if(data?.session&&newUser){S.signup={first:"",last:"",email:""};await resumeAccount(newUser);return}
       S.signup={first,last,email};S.verify={email,type:"signup"};S.busy=false;S.view="verify";render();toast("تم إرسال رسالة تأكيد إلى بريدك الإلكتروني");
     }catch(e){S.busy=false;S.err=cloudMsg(e);render()}
   },
