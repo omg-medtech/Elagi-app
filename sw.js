@@ -1,8 +1,8 @@
 /* Elagi service worker — offline app shell. Bump VERSION to force an update. */
-const VERSION = "elagi-v2";
+const VERSION = "elagi-v3";
 const SHELL = VERSION + "-shell";
 const RUNTIME = VERSION + "-runtime";
-const PRECACHE = ["./", "./manifest.json", "./icons/icon-192.png", "./icons/icon-512.png", "./icons/icon-maskable-512.png", "./icons/apple-touch-icon.png", "./icons/favicon-48.png"];
+const PRECACHE = ["./", "./manifest.json", "./icons/icon-192.png", "./icons/icon-512.png", "./icons/apple-touch-icon.png", "./icons/favicon-48.png"];
 const LIBS = ["https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.105.0", "https://unpkg.com/@supabase/supabase-js@2"];
 const FONT_CSS = "https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap";
 const CACHEABLE_HOSTS = ["fonts.googleapis.com", "fonts.gstatic.com", "cdn.jsdelivr.net", "unpkg.com", "cdnjs.cloudflare.com"];

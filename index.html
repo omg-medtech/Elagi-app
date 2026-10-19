@@ -838,7 +838,6 @@ function vLogin(){
    </form>
    <button class="btn quiet" data-a="goForgot">نسيت كلمة المرور؟</button>
    <button class="btn ghost" data-a="loginOtp" ${S.busy?"disabled":""}>دخول أو تسجيل برمز البريد بدون كلمة مرور</button>
-   ${window.isSecureContext&&navigator.credentials?`<button class="btn quiet" data-a="passkeyLogin" ${S.busy?"disabled":""}>${ic("fp",20)} الدخول بالبصمة أو مفتاح المرور</button>`:""}
    <button class="btn quiet" data-a="goSignup">ليس لديك حساب؟ تسجيل جديد</button>
   </div>`;
 }
@@ -875,16 +874,16 @@ function vResetPassword(){
 function vProfileSetup(){
   const d=S.draft||{};
   return `<div class="bar"><span class="sp"></span><h2>إعداد ملفك</h2><span class="sp"></span></div>
-   <div class="scroll"><h1 class="t">أكمل بياناتك الأساسية</h1><p class="lead">أكمل رقم هاتفك. سيطلب المتصفح إذن تحديد الموقع تلقائيًا الآن؛ يمكنك السماح أو إعادة المحاولة من الزر.</p>
+   <div class="scroll"><h1 class="t">أكمل بياناتك الأساسية</h1><p class="lead">أكمل رقم هاتفك. سنحدد موقعك تلقائيًا عند التسجيل، ويمكنك تغييره لاحقًا.</p>
    <label class="field"><span>الاسم الأول</span><input class="inp" data-k="first" autocomplete="given-name" value="${esc(d.first||"")}"></label>
    <label class="field"><span>اسم العائلة</span><input class="inp" data-k="last" autocomplete="family-name" value="${esc(d.last||"")}"></label>
    <label class="field"><span>رقم الهاتف</span><input class="inp ltr" style="width:100%" data-k="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="01xxxxxxxxx" value="${esc(d.phone||"")}"></label>
-   <div class="card" style="display:grid;gap:10px"><b>الموقع مطلوب للتسجيل</b><p class="hint" style="margin:0">لن نطلبه إلا عند ضغطك على الزر. سيُحفظ موقع الجهاز الحالي في السحابة ضمن بياناتك.</p>
-    <button class="btn ghost" data-a="setupLocation" ${S.busy?"disabled":""}>${S.busy&&!d.loc?"جارٍ تحديد الموقع…":d.loc?"تم تحديد الموقع — إعادة التحديد":"تحديد موقعي عبر GPS"}</button>
-    ${d.loc?`<small class="hint">تم التحديد بدقة تقريبية ${nfa(d.loc.acc)} متر.</small>`:""}
+   <div class="card" style="display:grid;gap:10px"><b>الموقع</b>
+    <p class="hint" style="margin:0">${S.busy&&!d.loc?"جارٍ تحديد موقعك تلقائيًا…":d.loc?"تم تحديد موقعك تلقائيًا":"لم نتمكن من تحديد موقعك. يمكنك المتابعة وتحديده لاحقًا."}</p>
+    <button class="btn ghost" data-a="setupLocation" ${S.busy?"disabled":""}>${d.loc?"تغيير الموقع":"إعادة المحاولة"}</button>
    </div>
    ${S.err?`<p class="err" role="alert">${esc(S.err)}</p>`:""}
-   </div><div class="foot"><button class="btn primary" data-a="finishSetup" ${S.busy||!d.loc?"disabled":""}>${S.busy?"جارٍ حفظ ملفك…":"حفظ وإكمال التسجيل"}</button></div>`;
+   </div><div class="foot"><button class="btn primary" data-a="finishSetup" ${S.busy?"disabled":""}>${S.busy?"جارٍ حفظ ملفك…":"حفظ وإكمال التسجيل"}</button></div>`;
 }
 const perDayAr=n=>n===1?"مرة واحدة":n===2?"مرتين":n<=10?`${n} مرات`:`${n} مرة`;
 function medLine(m){return `${perDayAr(+m.perDay)} يوميًا • الجرعة القادمة ${fmtTime(m.nextAt)}`}
@@ -923,7 +922,7 @@ function tabTips(){
   return `<div class="sec"><h3>نصائح لصحتك</h3></div><div class="list">${l.map(t=>`<div class="card tipc"><span class="bulb">${ic("bulb")}</span><div>${esc(t)}</div></div>`).join("")}</div><p class="hint" style="margin-top:14px">نصائح عامة للتوعية، ولا تحل محل رأي الطبيب.</p>`;
 }
 function tabSettings(){
-  const u=S.user,ad=adherence(),notif="Notification"in window&&Notification.permission==="granted";
+  const u=S.user,ad=adherence(),notif="Notification"in window&&Notification.permission==="granted"&&(!!u.push||!("PushManager"in window));
   const tg=(on,label,a)=>`<button class="tg" role="switch" aria-checked="${on}" aria-label="${label}" data-a="${a}"></button>`;
   return `<div class="who"><button class="av-wrap" data-a="avatarSheet" aria-label="تغيير الصورة الشخصية">${avatarHtml(72)}<span class="av-cam">${ic("camera",14)}</span></button><div><b style="font-size:19px">${esc(u.first)} ${esc(u.last)}</b><div style="color:var(--ink-2)">${u.gender?esc(u.gender)+" • ":""}${u.age?esc(u.age)+" سنة":"السن غير مضاف"}</div><div style="color:var(--ink-2)">${esc((u.cond||[]).join("، "))}</div></div></div>
   <div class="card" style="margin-bottom:14px"><div class="kv"><span>البريد الإلكتروني</span><b class="ltr">${esc(u.email||"")}</b></div><div class="kv"><span>رقم الهاتف</span><b class="ltr">${u.phone?esc(showPhone(u.phone)):"غير مضاف"}</b></div>
@@ -931,9 +930,9 @@ function tabSettings(){
    <div class="kv"><span>الالتزام بالجرعات (7 أيام)</span><b>${ad===null?"—":ad+"%"}</b></div>
    <div style="display:grid;gap:8px;margin-top:14px"><button class="btn ghost" data-a="editProfile">${ic("edit",18)} تعديل الملف الشخصي</button>
    ${S.googleLinked?`<div class="kv"><span>حساب Google</span><b>مرتبط</b></div>`:`<button class="btn ghost" data-a="linkGoogle">${googleMark()} ربط حساب Google</button>`}
-   ${window.isSecureContext&&navigator.credentials?`<button class="btn ghost" data-a="registerPasskey">${ic("fp",20)} تسجيل بصمة / مفتاح مرور</button>`:`<p class="hint">Passkey يحتاج HTTPS وإعداد نطاق ثابت.</p>`}</div></div>
+   </div></div>
   <div class="card" style="margin-bottom:14px">
-   <div class="sw"><div>إشعارات النظام<small>تظهر عند خروجك من التطبيق</small></div>${tg(notif,"إشعارات النظام","togNotif")}</div>
+   <div class="sw"><div>إشعارات النظام<small>تصلك تذكيرات الجرعات والتحاليل حتى والتطبيق مغلق</small></div>${tg(notif,"إشعارات النظام","togNotif")}</div>
    <div class="sw"><div>التنبيه الصوتي المنطوق<small>يقرأ: لا تنسَ جرعة دواء… يا ${esc(u.first)}</small></div>${tg(u.set.voice,"التنبيه الصوتي","togVoice")}</div>
    <div class="sw"><div>إبقاء الشاشة مضاءة<small>ليظهر التنبيه فورًا أثناء فتح التطبيق</small></div>${tg(u.set.wake,"إبقاء الشاشة مضاءة","togWake")}</div>
    <div class="sw"><div>جرّب شكل التنبيه وصوته</div><button class="btn quiet" style="width:auto;min-height:40px" data-a="testAlarm">${ic("speaker",20)} تجربة</button></div>
@@ -974,6 +973,7 @@ function renderEditor(){
   ${solid?`<div class="row2"><div class="field"><span style="display:block;font-weight:600;font-size:14.5px;margin-bottom:6px">المتبقي (${esc(e.unit||"قرص")})</span><input class="inp ltr" style="width:100%" id="edQtyN" type="number" inputmode="numeric" min="0" value="${e.qty}" aria-label="عدد المتبقي"></div></div>
    <div class="field"><span style="display:block;font-weight:600;font-size:14.5px;margin-bottom:6px">في كل جرعة</span><div class="step"><button data-a="edDose" data-v="-1" aria-label="أنقص">−</button><output>${nfa(e.dosePer)}</output><button data-a="edDose" data-v="1" aria-label="زِد">+</button></div></div>`:`<p class="hint" style="margin:0 0 14px">لا نسأل عن الكمية لأن الدواء سائل أو موضعي.</p>`}
   <div class="field"><span style="display:block;font-weight:600;font-size:14.5px;margin-bottom:6px">طريقة الأخذ</span><div class="chips">${[["before","قبل الأكل"],["after","بعد الأكل"],["with","مع الأكل"],["any","لا يهم"]].map(([k,l])=>`<button class="chip" data-a="edMeal" data-v="${k}" aria-pressed="${e.meal===k}">${l}</button>`).join("")}</div></div>
+  ${window.__dzChips?window.__dzChips():""}
   <button class="btn primary" data-a="edSave">حفظ الدواء</button>`,keepE);
 }
 function selHtml(){
@@ -1169,14 +1169,14 @@ const ACT={
   async setupLocation(){
     if(!S.draft)return;S.busy=true;S.err="";render();
     const loc=await getLocation();S.busy=false;
-    if(!loc){S.err="لم نتمكن من تحديد الموقع. اسمح للموقع في المتصفح وتأكد من تشغيل GPS ثم أعد المحاولة.";render();return}
-    S.draft.loc=loc;render();toast("تم تحديد الموقع؛ يمكنك الآن حفظ ملفك")
+    if(!loc){S.err="";render();return}
+    S.draft.loc=loc;render();toast("تم تحديد موقعك تلقائيًا")
   },
   async finishSetup(){
     const d=S.draft||{};const first=String(d.first||"").trim(),last=String(d.last||"").trim(),phone=normPhone(d.phone||"");
     if(!first||!last){S.err="اكتب الاسم الأول واسم العائلة.";render();return}
     if(!phoneOk(phone)){S.err="اكتب رقم هاتف صحيحًا.";render();return}
-    if(!d.loc||!isFinite(d.loc.lat)||!isFinite(d.loc.lng)){S.err="تحديد الموقع مطلوب لإكمال التسجيل.";render();return}
+    S.busy=true;S.err="";render();if(!d.loc)d.loc=await getLocation();
     S.busy=true;S.err="";render();
     try{
       const authUser=await Cloud.currentUser();
@@ -1289,7 +1289,7 @@ disc:"هذه تقديرات للتوعية وليست تشخيصًا. استشر
 treat:"المرض والأدوية والجرعات والمواعيد",disease:"المرض / الحالة الصحية",noMeds:"لا توجد أدوية مضافة.",addMed:"إضافة دواء",next:"الجرعة القادمة",late:"متأخرة",taken:"تم أخذ الدواء",skip:"تخطي الجرعة",
 doseOf:"الجرعة",times:"المواعيد",perDay:n=>n===1?"مرة يوميًا":n===2?"مرتان يوميًا":n+" مرات يوميًا",
 testsT:"التحاليل التي أجريتها",noTests:"لا توجد تحاليل مسجلة بعد.",all:"عرض الكل",measT:"مؤشر كتلة الجسم وقياسات الجسم ومساحة السطح",
-noMeas:"أضف طولك ووزنك لحساب مؤشر كتلة الجسم ومساحة السطح وتوزيع الدهون.",openMeas:"فتح قياسات الجسم",refill:"جدّد الدواء قريبًا.",pdf:"تنزيل كملف PDF",pdfWait:"جارٍ تجهيز الملف…",pdfErr:"تعذّر إنشاء الملف — تحقق من الاتصال بالإنترنت",pdfTitle:"الملخص الصحي",pdfApp:"حمّل تطبيق عِلاجي",pdfScan:"امسح الرمز أو افتح الرابط",apple:"تفاحي",pear:"كمثري",bioT:"القفل بالبصمة",bioSub:"اطلب البصمة أو قفل الشاشة عند فتح التطبيق",bioOn:"تفعيل",bioOff:"إيقاف",bioUnlock:"افتح بالبصمة",bioHint:"أكّد هويتك لفتح عِلاجي",bioEnabled:"تم تفعيل القفل بالبصمة",bioDisabled:"تم إيقاف القفل",bioNo:"جهازك أو متصفحك لا يدعم البصمة هنا",bioFail:"لم يتم التحقق. حاول مرة أخرى.",pushT:"إشعارات عند إغلاق التطبيق",pushSub:"تصلك تذكيرات الجرعات والتحاليل حتى والتطبيق مغلق",pushOn:"تفعيل",pushOff:"إيقاف",pushOk:"تم تفعيل الإشعارات على هذا الجهاز",pushDenied:"تم رفض إذن الإشعارات. فعّله من إعدادات المتصفح.",pushNo:"هذا الجهاز لا يدعم الإشعارات. على آيفون ثبّت التطبيق على الشاشة الرئيسية أولًا.",pushErr:"تعذّر تفعيل الإشعارات",pushStopped:"تم إيقاف الإشعارات",myMeds:"أدويتي",addDz:"إضافة مرض",dzName:"اسم المرض",dzPh:"مثال: السكري، الضغط",dzSave:"حفظ المرض",dzNone:"أدوية بدون مرض محدد",dzEmpty:"لم تُضف أدوية لهذا المرض بعد.",dzDel:"حذف المرض",dzDelQ:"حذف هذا المرض؟ ستبقى أدويته ضمن «أدوية بدون مرض محدد».",cancel:"إلغاء",remain:"المتبقي",lasts:"يكفي ~",dayW:"يوم",edit:"تعديل",del:"حذف",dzStart:"ابدأ بإضافة مرض، ثم أضف الأدوية التي تعالجه دواءً دواءً."},
+noMeas:"أضف طولك ووزنك لحساب مؤشر كتلة الجسم ومساحة السطح وتوزيع الدهون.",openMeas:"فتح قياسات الجسم",refill:"جدّد الدواء قريبًا.",pdf:"تنزيل كملف PDF",pdfWait:"جارٍ تجهيز الملف…",pdfErr:"تعذّر إنشاء الملف — تحقق من الاتصال بالإنترنت",pdfTitle:"الملخص الصحي",pdfApp:"حمّل تطبيق عِلاجي",pdfScan:"امسح الرمز أو افتح الرابط",apple:"تفاحي",pear:"كمثري",bioT:"القفل بالبصمة",bioSub:"اطلب البصمة أو قفل الشاشة عند فتح التطبيق",bioOn:"تفعيل",bioOff:"إيقاف",bioUnlock:"افتح بالبصمة",bioHint:"أكّد هويتك لفتح عِلاجي",bioEnabled:"تم تفعيل القفل بالبصمة",bioDisabled:"تم إيقاف القفل",bioNo:"جهازك أو متصفحك لا يدعم البصمة هنا",bioFail:"لم يتم التحقق. حاول مرة أخرى.",pushT:"إشعارات عند إغلاق التطبيق",pushSub:"تصلك تذكيرات الجرعات والتحاليل حتى والتطبيق مغلق",pushOn:"تفعيل",pushOff:"إيقاف",pushOk:"تم تفعيل الإشعارات على هذا الجهاز",pushDenied:"تم رفض إذن الإشعارات. فعّله من إعدادات المتصفح.",pushNo:"هذا الجهاز لا يدعم الإشعارات. على آيفون ثبّت التطبيق على الشاشة الرئيسية أولًا.",pushErr:"تعذّر تفعيل الإشعارات",pushStopped:"تم إيقاف الإشعارات",cam:"كاميرا",gal:"من الصور",clearAll:"حذف كل الأمراض والأدوية",clearQ:"سيتم حذف جميع الأمراض وأدويتها نهائيًا ولا يمكن التراجع.",clearYes:"نعم، احذف الكل",cleared:"تم الحذف",dzSel:"المرض",noDz:"بدون مرض",myMeds:"أدويتي",addDz:"إضافة مرض",dzName:"اسم المرض",dzPh:"مثال: السكري، الضغط",dzSave:"حفظ المرض",dzNone:"أدوية بدون مرض محدد",dzEmpty:"لم تُضف أدوية لهذا المرض بعد.",dzDel:"حذف المرض",dzDelQ:"حذف هذا المرض؟ ستبقى أدويته ضمن «أدوية بدون مرض محدد».",cancel:"إلغاء",remain:"المتبقي",lasts:"يكفي ~",dayW:"يوم",edit:"تعديل",del:"حذف",dzStart:"ابدأ بإضافة مرض، ثم أضف الأدوية التي تعالجه دواءً دواءً."},
 en:{title:"Body measurements",open:"Body measurements & surface area",sub:"BMI, surface area, fat distribution",btn:"Open",lang:"App language",sex:"Sex",m:"Male",f:"Female",
 h:"Height (cm)",w:"Weight (kg)",neck:"Neck circumference (cm)",waist:"Waist circumference (cm)",hip:"Hip circumference (cm)",
 how_h:"Stand straight and barefoot with your back to a wall. Measure from the floor to the top of the head.",
@@ -1306,7 +1306,7 @@ disc:"These are estimates for awareness, not a diagnosis. Ask your doctor before
 treat:"Condition, medicines, doses & times",disease:"Condition",noMeds:"No medicines added.",addMed:"Add medicine",next:"Next dose",late:"Overdue",taken:"Taken",skip:"Skip dose",
 doseOf:"Dose",times:"Times",perDay:n=>n+"× daily",
 testsT:"Tests you've done",noTests:"No test results yet.",all:"View all",measT:"BMI, body measurements & surface area",
-noMeas:"Add your height and weight to calculate BMI, surface area and fat distribution.",openMeas:"Open body measurements",refill:"Refill soon.",pdf:"Download PDF",pdfWait:"Preparing the file…",pdfErr:"Couldn't create the file — check your connection",pdfTitle:"Health summary",pdfApp:"Get the Elagi app",pdfScan:"Scan the code or open the link",apple:"Apple",pear:"Pear",bioT:"Fingerprint lock",bioSub:"Ask for fingerprint or screen lock when opening the app",bioOn:"Enable",bioOff:"Turn off",bioUnlock:"Unlock with fingerprint",bioHint:"Confirm it's you to open Elagi",bioEnabled:"Fingerprint lock enabled",bioDisabled:"Lock turned off",bioNo:"Your device or browser doesn't support this here",bioFail:"Couldn't verify. Try again.",pushT:"Notifications when the app is closed",pushSub:"Get dose and test reminders even when the app is closed",pushOn:"Enable",pushOff:"Turn off",pushOk:"Notifications enabled on this device",pushDenied:"Notification permission denied. Enable it in browser settings.",pushNo:"This device doesn't support notifications. On iPhone, add the app to the Home Screen first.",pushErr:"Couldn't enable notifications",pushStopped:"Notifications turned off",myMeds:"My medicines",addDz:"Add condition",dzName:"Condition name",dzPh:"e.g. Diabetes, Hypertension",dzSave:"Save condition",dzNone:"Medicines without a condition",dzEmpty:"No medicines added for this condition yet.",dzDel:"Delete condition",dzDelQ:"Delete this condition? Its medicines will be kept under \"Medicines without a condition\".",cancel:"Cancel",remain:"Remaining",lasts:"lasts ~",dayW:"days",edit:"Edit",del:"Delete",dzStart:"Start by adding a condition, then add the medicines that treat it, one by one."}};
+noMeas:"Add your height and weight to calculate BMI, surface area and fat distribution.",openMeas:"Open body measurements",refill:"Refill soon.",pdf:"Download PDF",pdfWait:"Preparing the file…",pdfErr:"Couldn't create the file — check your connection",pdfTitle:"Health summary",pdfApp:"Get the Elagi app",pdfScan:"Scan the code or open the link",apple:"Apple",pear:"Pear",bioT:"Fingerprint lock",bioSub:"Ask for fingerprint or screen lock when opening the app",bioOn:"Enable",bioOff:"Turn off",bioUnlock:"Unlock with fingerprint",bioHint:"Confirm it's you to open Elagi",bioEnabled:"Fingerprint lock enabled",bioDisabled:"Lock turned off",bioNo:"Your device or browser doesn't support this here",bioFail:"Couldn't verify. Try again.",pushT:"Notifications when the app is closed",pushSub:"Get dose and test reminders even when the app is closed",pushOn:"Enable",pushOff:"Turn off",pushOk:"Notifications enabled on this device",pushDenied:"Notification permission denied. Enable it in browser settings.",pushNo:"This device doesn't support notifications. On iPhone, add the app to the Home Screen first.",pushErr:"Couldn't enable notifications",pushStopped:"Notifications turned off",cam:"Camera",gal:"From photos",clearAll:"Delete all conditions & medicines",clearQ:"All conditions and their medicines will be permanently deleted. This can't be undone.",clearYes:"Yes, delete all",cleared:"Deleted",dzSel:"Condition",noDz:"No condition",myMeds:"My medicines",addDz:"Add condition",dzName:"Condition name",dzPh:"e.g. Diabetes, Hypertension",dzSave:"Save condition",dzNone:"Medicines without a condition",dzEmpty:"No medicines added for this condition yet.",dzDel:"Delete condition",dzDelQ:"Delete this condition? Its medicines will be kept under \"Medicines without a condition\".",cancel:"Cancel",remain:"Remaining",lasts:"lasts ~",dayW:"days",edit:"Edit",del:"Delete",dzStart:"Start by adding a condition, then add the medicines that treat it, one by one."}};
 const K=["h","w","neck","waist","hip"];
 let LANG="ar";try{LANG=localStorage.getItem("elagi.lang")==="en"?"en":"ar"}catch{}window.ELANG=LANG;
 const lg=()=>LANG,t=k=>TX[lg()][k],dir=()=>LANG==="en"?"ltr":"rtl";
@@ -1484,11 +1484,14 @@ tabMeds=function(){
     return `<div class="item">${medTh(m)}<div class="tx"><b class="ltr">${esc(m.name)}</b><small>${t("perDay")(m.perDay)} • ${t("next")}: ${tm(m.nextAt)}</small>${m.generic?`<small class="ltr">${esc(m.generic)}</small>`:""}${m.countable?`<small>${t("remain")} <span class="ltr">${nfa(m.qty)}</span> ${esc(unitTxt(m.unit||""))} (${t("lasts")} <span class="ltr">${d}</span> ${t("dayW")})</small>`:""}</div><button class="icon-btn" data-a="editMed" data-id="${esc(m.id)}" aria-label="${t("edit")}">${ic("edit",20)}</button><button class="icon-btn" data-a="delMed" data-id="${esc(m.id)}" aria-label="${t("del")}">${ic("trash",20)}</button></div>`};
   const box=(title,act,ms,add)=>card(title,act,(ms.length?`<div class="list">${ms.map(item).join("")}</div>`:`<p class="hint" style="margin:0 0 10px">${t("dzEmpty")}</p>`)+add);
   const addBtn=(a,i,c)=>`<button class="btn ${c}" style="width:100%;margin-top:8px" data-a="${a}"${i!=null?` data-i="${i}"`:""}>${ic("plus",18)} ${t("addMed")}</button>`;
+  const bs="font-size:15px;padding:0 10px";
   return `<div dir="${dir()}"><div class="sec"><h3>${t("myMeds")} (${nfa((u.meds||[]).length)})</h3></div>
-<button class="btn primary" style="width:100%;margin-bottom:14px" data-a="dzAddOpen">${ic("plus",18)} ${t("addDz")}</button>
+<div class="row2" style="margin-bottom:10px"><button class="btn primary" style="${bs}" data-a="dzAddOpen">${ic("plus",18)} ${t("addDz")}</button><button class="btn ghost" style="${bs}" data-a="addManual">${ic("plus",18)} ${t("addMed")}</button></div>
+<div class="row2" style="margin-bottom:14px"><button class="btn ghost" style="${bs}" data-a="addCam">${ic("camera",22)} ${t("cam")}</button><button class="btn ghost" style="${bs}" data-a="addGal">${ic("image",22)} ${t("gal")}</button></div>
 ${!g.length&&!oth.length?`<p class="hint">${t("dzStart")}</p>`:""}
 ${g.map((x,i)=>box(esc(x.n),`<button class="icon-btn" data-a="dzDel" data-i="${i}" aria-label="${t("dzDel")}">${ic("trash",20)}</button>`,x.m,addBtn("dzMed",i,"ghost"))).join("")}
-${oth.length?box(t("dzNone"),"",oth,addBtn("addManual",null,"quiet")):""}</div>`;
+${oth.length?box(t("dzNone"),"",oth,""):""}
+${g.length||oth.length?`<button class="btn danger" style="width:100%;margin-top:6px" data-a="dzClearAll">${ic("trash",18)} ${t("clearAll")}</button>`:""}</div>`;
 };
 }
 
@@ -1512,18 +1515,16 @@ const sd=searchDrugs;
 searchDrugs=function(q,limit=8){const r=sd(q,limit);if(!/[\u0600-\u06FF]/.test(q||"")||r.length>=limit)return r;const seen=new Set(r);for(const i of arSearch((q||"").trim(),limit*2)){if(r.length>=limit)break;if(!seen.has(i)){r.push(i);seen.add(i)}}return r};
 window.__arSearch=arSearch;
 }
-/* ===== Smoother, clearer alert sound + voice ===== */
+/* ===== Steady alert: soft chime + ONE continuous voice (Arabic or English) ===== */
 {
 let AC=null;
 beep=function(){
   try{
     AC=AC||new (window.AudioContext||window.webkitAudioContext)();const a=AC;if(a.state==="suspended")a.resume();
-    const t0=a.currentTime+.04,out=a.createGain(),comp=a.createDynamicsCompressor(),dl=a.createDelay(.6),fb=a.createGain(),wet=a.createGain();
-    out.gain.value=.85;dl.delayTime.value=.27;fb.gain.value=.3;wet.gain.value=.32;
-    out.connect(comp);out.connect(dl);dl.connect(fb);fb.connect(dl);dl.connect(wet);wet.connect(comp);comp.connect(a.destination);
-    const note=(f,at)=>{[[1,.5,"sine"],[2,.14,"sine"],[3,.05,"sine"]].forEach(([m,v,ty])=>{const o=a.createOscillator(),g=a.createGain(),s=t0+at;o.type=ty;o.frequency.value=f*m;
-      g.gain.setValueAtTime(0,s);g.gain.linearRampToValueAtTime(v,s+.015);g.gain.exponentialRampToValueAtTime(.0008,s+1.15);o.connect(g);g.connect(out);o.start(s);o.stop(s+1.25)})};
-    [0,1.05].forEach(r=>[659.25,783.99,1046.5].forEach((f,i)=>note(f,r+i*.2)));
+    const t0=a.currentTime+.03,out=a.createGain(),comp=a.createDynamicsCompressor();
+    out.gain.value=.8;out.connect(comp);comp.connect(a.destination);
+    [[659.25,0],[783.99,.14],[1046.5,.28]].forEach(([f,at])=>[[1,.5],[2,.12]].forEach(([m,v])=>{const o=a.createOscillator(),g=a.createGain(),s=t0+at;o.type="sine";o.frequency.value=f*m;
+      g.gain.setValueAtTime(0,s);g.gain.linearRampToValueAtTime(v,s+.02);g.gain.exponentialRampToValueAtTime(.001,s+.8);o.connect(g);g.connect(out);o.start(s);o.stop(s+.85)}));
   }catch{}
   navigator.vibrate&&navigator.vibrate([200,100,200]);
 };
@@ -1533,17 +1534,44 @@ const pick=lang=>{const l=lang.toLowerCase().replace("_","-"),c=VS.filter(v=>nl(
 Voice.say=function(parts){try{
   if(!("speechSynthesis"in window)||S.user?.set?.voice===false)return;
   speechSynthesis.cancel();loadV();
-  for(const p of parts){if(!p.t)continue;const u=new SpeechSynthesisUtterance(p.t);u.lang=p.lang;const v=pick(p.lang);if(v)u.voice=v;u.rate=.85;u.pitch=1;u.volume=1;speechSynthesis.speak(u)}
+  for(const p of parts){if(!p.t)continue;const u=new SpeechSynthesisUtterance(p.t);u.lang=p.lang;const v=pick(p.lang);if(v)u.voice=v;u.rate=.9;u.pitch=1;u.volume=1;speechSynthesis.speak(u)}
 }catch{}};
+/* Latin -> Arabic spelling, so an English drug/person name is read by the SAME Arabic voice */
+const NAMES={omar:"عمر",ahmed:"أحمد",ahmad:"أحمد",mohamed:"محمد",mohammed:"محمد",muhammad:"محمد",mohamad:"محمد",mahmoud:"محمود",ali:"علي",mostafa:"مصطفى",mustafa:"مصطفى",hassan:"حسن",hasan:"حسن",hussein:"حسين",hossam:"حسام",hosam:"حسام",khaled:"خالد",khalid:"خالد",ibrahim:"إبراهيم",youssef:"يوسف",yousef:"يوسف",yusuf:"يوسف",sara:"سارة",sarah:"سارة",mona:"منى",nour:"نور",noor:"نور",fatma:"فاطمة",fatima:"فاطمة",mariam:"مريم",maryam:"مريم",amr:"عمرو",tarek:"طارق",tariq:"طارق",walid:"وليد",waleed:"وليد",karim:"كريم",kareem:"كريم",salma:"سلمى",heba:"هبة",aya:"آية",ayman:"أيمن",adel:"عادل",hany:"هاني",hani:"هاني",sami:"سامي",samy:"سامي",rania:"رانيا",dina:"دينا",nada:"ندى",esraa:"إسراء",asmaa:"أسماء",mohsen:"محسن",abdullah:"عبدالله",abdallah:"عبدالله",abdelrahman:"عبدالرحمن",mina:"مينا"};
+let REV=null;const rev=()=>{if(REV)return REV;REV={};try{for(const[a,e]of Object.entries(ALIAS)){const k=String(e).toUpperCase();if(!REV[k]||a.length<REV[k].length)REV[k]=a}}catch{}return REV};
+const DG=[["sch","سك"],["tch","تش"],["ph","ف"],["sh","ش"],["kh","خ"],["gh","غ"],["th","ث"],["ck","ك"],["qu","كو"],["ee","ي"],["oo","و"],["ou","او"],["ai","اي"],["ay","اي"],["ei","اي"],["ey","اي"],["au","او"],["aw","او"],["ow","او"],["oa","و"],["ie","ي"]];
+const SG={b:"ب",d:"د",f:"ف",g:"ج",h:"ه",j:"ج",k:"ك",l:"ل",m:"م",n:"ن",p:"ب",q:"ق",r:"ر",s:"س",t:"ت",v:"ف",x:"كس",z:"ز",w:"و",y:"ي"};
+function tl(w){
+  let s=w.toLowerCase().replace(/[^a-z]/g,"");if(!s)return"";
+  s=s.replace(/([^aeiou])\1+/g,"$1");if(/[^aeiouy]e$/.test(s)&&s.length>3)s=s.slice(0,-1);
+  let o="",i=0;
+  while(i<s.length){
+    const c=s[i],init=i===0;let hit=null;
+    if(s.startsWith("ch",i)){hit=["ch",/^[lr]/.test(s.slice(i+2))?"ك":"تش"]}
+    else for(const[k,v]of DG)if(s.startsWith(k,i)){hit=[k,v];break}
+    if(hit){o+=hit[1];i+=hit[0].length;continue}
+    if("aeiou".includes(c)){o+=init?({a:"ا",e:"اي",i:"اي",o:"او",u:"او"}[c]):({a:"ا",e:"ي",i:"ي",o:"و",u:"و"}[c])}
+    else if(c==="c")o+=/[eiy]/.test(s[i+1]||"")?"س":"ك";
+    else o+=SG[c]||"";
+    i++;
+  }
+  return o;
+}
+function arName(n){
+  return String(n||"").trim().split(/\s+/).map(w=>{
+    if(!w||/[؀-ۿ0-9]/.test(w))return w;const k=w.replace(/[^A-Za-z]/g,"");if(!k)return w;
+    return NAMES[k.toLowerCase()]||rev()[k.toUpperCase()]||tl(k)}).join(" ");
+}
+window.__tl=arName;
 alarmSpeak=function(){
   if(!A)return;beep();
-  const u=S.user,who=u.first,isMed=A.kind==="med",en=LANG==="en";
-  setTimeout(()=>{if(!A)return;Voice.say(en?[
-    {t:isMed?"Don't forget your medicine dose.":"It's time for",lang:"en-US"},{t:isMed?shortName(A.name):A.name,lang:"en-US"},{t:who,lang:hasAr(who)?"ar-SA":"en-US"}]:[
-    {t:isMed?"لا تنسَ جرعة دواء":"حان موعد",lang:"ar-SA"},{t:isMed?shortName(A.name):A.name,lang:isMed||!hasAr(A.name)?"en-US":"ar-SA"},{t:"يا",lang:"ar-SA"},{t:who,lang:hasAr(who)?"ar-SA":"en-US"}])},1100);
+  const u=S.user,isMed=A.kind==="med",en=LANG==="en";let nm=isMed?shortName(A.name):A.name,who=u.first||"";
+  if(en){if(!isMed){const t0=(u.tests||[]).find(x=>x.id===A.id);if(t0&&t0.en)nm=t0.en}}
+  else{nm=arName(nm);who=arName(who)}
+  const txt=en?(isMed?`Don't forget your ${nm} dose ${who}`:`It's time for ${nm} ${who}`):(isMed?`لا تنسَ جرعة دواء ${nm} يا ${who}`:`حان موعد ${nm} يا ${who}`);
+  setTimeout(()=>{if(!A)return;Voice.say([{t:txt.replace(/\s+/g," ").trim(),lang:en?"en-US":"ar-SA"}])},950);
 };
 }
-
 /* ===== Local fingerprint lock (WebAuthn platform authenticator) ===== */
 {
 const BK="elagi.bio",b64=u=>btoa(String.fromCharCode(...new Uint8Array(u))),unb=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
@@ -1585,34 +1613,54 @@ document.addEventListener("visibilitychange",()=>{if(document.hidden)lastHide=Da
 window.__bio={has:()=>!!bioId(),ok:()=>BIO_OK};
 showLock();
 }
-/* ===== Web Push (closed-app reminders) ===== */
+/* ===== Web Push: the single "إشعارات النظام" switch works even when the app is closed ===== */
 {
 const VAPID="BAufWhozi4VBtelE7c07rnpaSI2ygE9Hx0GikhJ1mQBpqUCL99UjAZsTlzRTtjJpIud7mr9YheIq3wqwsELLv-Q";
 const u8=s=>{const p="=".repeat((4-s.length%4)%4),r=atob((s+p).replace(/-/g,"+").replace(/_/g,"/"));return Uint8Array.from(r,c=>c.charCodeAt(0))};
 const supported=()=>"serviceWorker"in navigator&&"PushManager"in window&&"Notification"in window&&window.isSecureContext;
-async function reg(){return navigator.serviceWorker.getRegistration().then(r=>r||navigator.serviceWorker.ready)}
+async function subscribe(){
+  const r=await navigator.serviceWorker.ready;let sub=await r.pushManager.getSubscription();
+  if(!sub)sub=await r.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:u8(VAPID)});
+  S.user.push=JSON.parse(JSON.stringify(sub));S.user.tz=Intl.DateTimeFormat().resolvedOptions().timeZone||"";return r;
+}
 async function enablePush(){
-  if(!supported()){toast(t("pushNo"));return}
+  if(!("Notification"in window)){toast(t("pushNo"));return}
   try{
-    const perm=await Notification.requestPermission();if(perm!=="granted"){toast(t("pushDenied"));return}
-    const r=await navigator.serviceWorker.ready;let sub=await r.pushManager.getSubscription();
-    if(!sub)sub=await r.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:u8(VAPID)});
-    S.user.push=JSON.parse(JSON.stringify(sub));S.user.tz=Intl.DateTimeFormat().resolvedOptions().timeZone||"";
-    if(await persist()){toast(t("pushOk"));render()}
-  }catch(e){console.warn("push",e);toast(t("pushErr"))}
+    const perm=Notification.permission==="granted"?"granted":await Notification.requestPermission();
+    if(perm!=="granted"){toast(t("pushDenied"));render();return}
+    if(!supported()){toast(t("pushNo"));render();return}
+    const r=await subscribe();
+    if(await persist()){toast(t("pushOk"));try{r.showNotification(LANG==="en"?"Elagi":"عِلاجي",{body:t("pushOk"),icon:"icons/icon-192.png",badge:"icons/favicon-48.png",tag:"elagi-welcome"})}catch{}}
+    render();
+  }catch(e){console.warn("push",e);toast(t("pushErr")+" ("+((e&&e.name)||"?")+")");render()}
 }
 async function disablePush(){
   try{const r=await navigator.serviceWorker.ready,s=await r.pushManager.getSubscription();if(s)await s.unsubscribe()}catch{}
   S.user.push=null;await persist();toast(t("pushStopped"));render();
 }
-Object.assign(ACT,{pushOn(){enablePush()},pushOff(){disablePush()}});
+Object.assign(ACT,{togNotif(){return(S.user&&S.user.push&&Notification.permission==="granted")?disablePush():enablePush()}});
+async function sync(){try{
+  if(!S.user||!S.user.push||!supported()||Notification.permission!=="granted")return;
+  const r=await navigator.serviceWorker.ready,s=await r.pushManager.getSubscription();
+  if(!s||s.endpoint!==S.user.push.endpoint){await subscribe();await persist()}
+}catch(e){console.warn("push sync",e)}}
+document.addEventListener("visibilitychange",()=>{if(!document.hidden)sync()});
+const eh=enterHome;enterHome=async function(){const r=await eh.apply(this,arguments);setTimeout(sync,1500);return r};
 window.__push={supported};
 }
+
+window.__dzChips=function(){const u=S.user;if(!u||!(u.cond||[]).length)return"";const cur=(E&&E.cond)||"";
+  return `<div class="field"><span style="${lab}">${t("dzSel")}</span><div class="chips"><button class="chip" data-a="edDz" aria-pressed="${!cur}">${t("noDz")}</button>${u.cond.map((c,i)=>`<button class="chip" data-a="edDz" data-i="${i}" aria-pressed="${cur===c}">${esc(c)}</button>`).join("")}</div></div>`};
+Object.assign(ACT,{
+  edDz(el){if(!E)return;const i=el.dataset.i;E.cond=i==null?"":((S.user.cond||[])[+i]||"");renderEditor()},
+  dzClearAll(){openSheet(`<div dir="${dir()}"><div class="sheet-h"><h3>${t("clearAll")}</h3><button class="icon-btn" data-a="sheetClose" aria-label="x">${ic("x")}</button></div><p class="hint">${t("clearQ")}</p><div class="row2"><button class="btn ghost" data-a="sheetClose">${t("cancel")}</button><button class="btn danger" data-a="dzClearYes">${t("clearYes")}</button></div></div>`)},
+  async dzClearYes(){S.user.meds=[];S.user.cond=[];await persist();closeSheet();render();toast(t("cleared"))}
+});
 const ts=tabSettings;
 tabSettings=function(){
   const bioOn=window.__bio&&window.__bio.has(),pushOn=!!(S.user&&S.user.push);
   const srow=(ti,su,on,aOn,aOff,show)=>show?`<div class="sw" style="margin-top:12px"><div>${ti}<small>${su}</small></div><button class="btn ${on?"ghost":"quiet"}" style="width:auto;min-height:40px" data-a="${on?aOff:aOn}">${on?t(aOff):t(aOn)}</button></div>`:"";
-  const card=`<div class="card" style="margin-bottom:14px" dir="${dir()}">${langBar()}${srow(t("bioT"),t("bioSub"),bioOn,"bioOn","bioOff",window.__bio&&window.__bio.ok())}${srow(t("pushT"),t("pushSub"),pushOn,"pushOn","pushOff",window.__push&&window.__push.supported())}</div>`;
+  const card=`<div class="card" style="margin-bottom:14px" dir="${dir()}">${langBar()}${srow(t("bioT"),t("bioSub"),bioOn,"bioOn","bioOff",window.__bio&&window.__bio.ok())}</div>`;
   const mark='<div style="display:grid;gap:10px"><button class="btn ghost" data-a="logout">',h=ts();
   return h.includes(mark)?h.replace(mark,card+mark):h+card;
 };
@@ -1746,6 +1794,12 @@ const D=[["عِلاجي","Elagi"],
 ["حذف الحساب وبياناتي","Delete account and my data"],
 ["(7 أيام)","(7 days)"],
 ["الرئيسية","Home"],["القياسات","Body"],["لا تنسَ جرعة دواء","Don't forget your medicine dose"],["حان موعد","It's time for"],["ذكّرني بعد 10 دقائق","Remind me in 10 minutes"],["سجّل النتيجة","Record result"],["تخطي","Skip"],["قرص/كبسولة","tablet/capsule"],
+["تصلك تذكيرات الجرعات والتحاليل حتى والتطبيق مغلق","Dose and test reminders arrive even when the app is closed"],
+["سنحدد موقعك تلقائيًا عند التسجيل، ويمكنك تغييره لاحقًا.","We'll detect your location automatically when you sign up. You can change it later."],
+["جارٍ تحديد موقعك تلقائيًا…","Detecting your location automatically…"],
+["تم تحديد موقعك تلقائيًا","Your location was detected automatically"],
+["لم نتمكن من تحديد موقعك. يمكنك المتابعة وتحديده لاحقًا.","Couldn't detect your location. You can continue and set it later."],
+["تغيير الموقع","Change location"],["إعادة المحاولة","Try again"],
 ["العربية","العربية"]];
 const norm=s=>s.replace(/[\u064B-\u0652\u0670]/g,""),AR=/[\u0600-\u06FF]/;
 const M=D.map(([a,e])=>[norm(a),e]).sort((x,y)=>y[0].length-x[0].length),EX=new Map(M);
