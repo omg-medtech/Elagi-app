@@ -219,7 +219,7 @@ p.lead{margin:0 0 18px;color:var(--ink-2)}
 .or{display:flex;align-items:center;gap:12px;width:100%;max-width:340px;margin:18px 0 0;color:var(--ink-2);font-size:14px}.or::before,.or::after{content:"";flex:1;height:1px;background:var(--line)}
 .social{display:flex;gap:16px;justify-content:center;margin-top:14px}
 .sbtn{width:60px;height:60px;border-radius:50%;border:2px solid var(--line);background:var(--card);display:grid;place-items:center;color:var(--ink);transition:transform .12s}.sbtn:active{transform:scale(.95)}.sbtn:disabled{opacity:.5}
-html[lang=en] .latin{display:none}
+.latin{display:none}
 </style>
 </head>
 <body>
@@ -506,7 +506,7 @@ function showAlarm(kind,item,demo){
   const l1=isMed?"لا تنسَ جرعة دواء":"حان موعد",who=u.first;
   const media=isMed&&item.photo?`<img alt="صورة الدواء" src="${esc(item.photo)}">`:ic(isMed?"pill":(item.kind==="bp"?"heart":"flask"),72);
   const meal=isMed&&item.meal&&item.meal!=="any"?mealText[item.meal]:"";
-  $("#alarm").innerHTML=`<div class="al-clock">Elagi<b>${fmtTime(Date.now())}</b></div>
+  $("#alarm").innerHTML=`<div class="al-clock">${window.ELANG==="en"?"Elagi":"عِلاجي"}<b>${fmtTime(Date.now())}</b></div>
    <div class="al-mid"><div class="al-photo">${media}</div>
     <p class="al-l1">${l1}</p><h2 class="al-name ${isMed?"ltr":""}" ${isMed?'style="display:block"':""}>${esc(name)}</h2><p class="al-l1" style="margin-top:2px">يا ${esc(who)}</p>${meal?`<p class="al-meal">${meal}</p>`:""}</div>
    <div class="al-acts">${isMed
@@ -518,7 +518,7 @@ function showAlarm(kind,item,demo){
   alarmN=0;alarmSpeak();clearInterval(alarmT);
   alarmT=setInterval(()=>{if(++alarmN>=4){clearInterval(alarmT);return}alarmSpeak()},28000);
   try{if(!demo&&document.hidden&&"Notification"in window&&Notification.permission==="granted"){
-    const n=new Notification("Elagi",{body:`${l1} ${name} يا ${who}`,icon:isMed&&item.photo?item.photo:undefined,image:isMed&&item.photo?item.photo:undefined,requireInteraction:true,tag:"ilaji-"+item.id,vibrate:[300,150,300,150,300]});
+    const n=new Notification(window.ELANG==="en"?"Elagi":"عِلاجي",{body:`${l1} ${name} يا ${who}`,icon:isMed&&item.photo?item.photo:undefined,image:isMed&&item.photo?item.photo:undefined,requireInteraction:true,tag:"ilaji-"+item.id,vibrate:[300,150,300,150,300]});
     n.onclick=()=>{try{window.focus()}catch{}n.close()};}}catch{}
 }
 function closeAlarm(){A=null;clearInterval(alarmT);Voice.stop();$("#alarm").hidden=true;$("#alarm").innerHTML=""}
@@ -789,7 +789,7 @@ function vWelcome(){
 }
 function vSignup(){
   return `<div class="bar"><button class="icon-btn" data-a="backWelcome" aria-label="رجوع">${ic("back")}</button><h2>تسجيل جديد</h2><span class="sp"></span></div>
-  <div class="scroll"><h1 class="t">إنشاء حساب Elagi</h1><p class="lead">أدخل بياناتك الأساسية. سنرسل رسالة تأكيد إلى بريدك الإلكتروني.</p>
+  <div class="scroll"><h1 class="t">إنشاء حساب عِلاجي</h1><p class="lead">أدخل بياناتك الأساسية. سنرسل رسالة تأكيد إلى بريدك الإلكتروني.</p>
    <form id="signupForm" class="auth-form">
     <label class="field"><span>الاسم الأول</span><input class="inp" data-s="first" autocomplete="given-name" required value="${esc(S.signup.first||"")}"></label>
     <label class="field"><span>اسم العائلة</span><input class="inp" data-s="last" autocomplete="family-name" required value="${esc(S.signup.last||"")}"></label>
@@ -869,9 +869,9 @@ function vHome(){
   const u=S.user;let body="";
   body=({doses:tabDoses,meds:tabMeds,tests:tabTests,tips:tabTips,settings:tabSettings}[S.tab]||tabDoses)();
   const T=(k,n,l)=>`<button data-a="tab" data-v="${k}" ${S.tab===k?'aria-current="page"':""}>${ic(n)}<span>${l}</span></button>`;
-  return `<div class="bar"><button class="icon-btn" data-a="bell" aria-label="التنبيهات">${ic("bell",22)}</button><h2>Elagi</h2><button class="hd-av" data-a="tab" data-v="settings" aria-label="الملف الشخصي">${avatarHtml(36)}</button></div>
+  return `<div class="bar"><button class="icon-btn" data-a="bell" aria-label="التنبيهات">${ic("bell",22)}</button><h2>${window.ELANG==="en"?"Elagi":"عِلاجي"}</h2><button class="hd-av" data-a="tab" data-v="settings" aria-label="الملف الشخصي">${avatarHtml(36)}</button></div>
   <div class="scroll" id="scroller">${body}</div>
-  <nav class="nav" aria-label="التنقل">${T("doses","cal","الجرعات")}${T("meds","pill","الأدوية")}${T("tests","flask","التحاليل")}${T("tips","bulb","النصائح")}${T("settings","sliders","الإعدادات")}</nav>`;
+  <nav class="nav" aria-label="التنقل">${T("doses","home","الرئيسية")}${T("meds","pill","الأدوية")}${T("tests","flask","التحاليل")}${T("tips","body","القياسات")}${T("settings","sliders","الإعدادات")}</nav>`;
 }
 function tabDoses(){return tabDosesCore()+testsBlock()}
 function tabDosesCore(){
@@ -1261,7 +1261,11 @@ bmiN:["نحافة","وزن طبيعي","وزن زائد","سمنة"],whtrN:["م�
 dHi:"مركزي (شكل التفاحة): دهون أكثر حول البطن",dLo:"محيطي (شكل الكمثرى): دهون أكثر حول الأرداف والفخذين",
 n_bsa:"تُستخدم مساحة السطح في حساب جرعات بعض الأدوية، ولا تغيّر جرعتك بنفسك.",n_whr:"أعلى من 0.90 للرجال أو 0.85 للنساء يدل على دهون بطنية زائدة.",n_bf:"بطريقة البحرية الأمريكية من الرقبة والخصر (والورك للنساء).",
 need:"أدخل الطول والوزن أولًا.",needSex:"اختر النوع لتظهر نسبة الدهون ونوع التوزيع.",res:"النتائج",save:"حفظ القياسات",saved:"تم حفظ القياسات",hist:"سجل القياسات",wt:"تغيّر الوزن",
-disc:"هذه تقديرات للتوعية وليست تشخيصًا. استشر طبيبك قبل أي قرار علاجي أو غذائي.",loc:"ar-EG",kg:"كجم"},
+disc:"هذه تقديرات للتوعية وليست تشخيصًا. استشر طبيبك قبل أي قرار علاجي أو غذائي.",loc:"ar-EG",kg:"كجم",home:"الرئيسية",personal:"البيانات الشخصية",name:"الاسم",age:"السن",yrs:"سنة",wLbl:"الوزن",hLbl:"الطول",cm:"سم",phone:"رقم الهاتف",editP:"تعديل",
+treat:"المرض والأدوية والجرعات والمواعيد",disease:"المرض / الحالة الصحية",noMeds:"لا توجد أدوية مضافة.",addMed:"إضافة دواء",next:"الجرعة القادمة",late:"متأخرة",taken:"تم أخذ الدواء",skip:"تخطي الجرعة",
+doseOf:"الجرعة",times:"المواعيد",perDay:n=>n===1?"مرة يوميًا":n===2?"مرتان يوميًا":n+" مرات يوميًا",
+testsT:"التحاليل التي أجريتها",noTests:"لا توجد تحاليل مسجلة بعد.",all:"عرض الكل",measT:"مؤشر كتلة الجسم وقياسات الجسم ومساحة السطح",
+noMeas:"أضف طولك ووزنك لحساب مؤشر كتلة الجسم ومساحة السطح وتوزيع الدهون.",openMeas:"فتح قياسات الجسم",refill:"جدّد الدواء قريبًا.",pdf:"تنزيل كملف PDF",pdfWait:"جارٍ تجهيز الملف…",pdfErr:"تعذّر إنشاء الملف — تحقق من الاتصال بالإنترنت",pdfTitle:"الملخص الصحي",pdfApp:"حمّل تطبيق عِلاجي",pdfScan:"امسح الرمز أو افتح الرابط"},
 en:{title:"Body measurements",open:"Body measurements & surface area",sub:"BMI, surface area, fat distribution",btn:"Open",lang:"App language",sex:"Sex",m:"Male",f:"Female",
 h:"Height (cm)",w:"Weight (kg)",neck:"Neck circumference (cm)",waist:"Waist circumference (cm)",hip:"Hip circumference (cm)",
 how_h:"Stand straight and barefoot with your back to a wall. Measure from the floor to the top of the head.",
@@ -1274,7 +1278,11 @@ bmiN:["Underweight","Normal weight","Overweight","Obese"],whtrN:["Very low","Hea
 dHi:"Central (apple shape): more fat around the belly",dLo:"Peripheral (pear shape): more fat around hips and thighs",
 n_bsa:"Surface area is used to calculate some drug doses. Never change your own dose.",n_whr:"Above 0.90 for men or 0.85 for women suggests excess abdominal fat.",n_bf:"US Navy method, from neck and waist (and hip for women).",
 need:"Enter height and weight first.",needSex:"Choose your sex to see body fat and fat distribution.",res:"Results",save:"Save measurements",saved:"Measurements saved",hist:"History",wt:"Weight trend",
-disc:"These are estimates for awareness, not a diagnosis. Ask your doctor before any treatment or diet decision.",loc:"en-GB",kg:"kg"}};
+disc:"These are estimates for awareness, not a diagnosis. Ask your doctor before any treatment or diet decision.",loc:"en-GB",kg:"kg",home:"Home",personal:"Personal details",name:"Name",age:"Age",yrs:"years",wLbl:"Weight",hLbl:"Height",cm:"cm",phone:"Phone number",editP:"Edit",
+treat:"Condition, medicines, doses & times",disease:"Condition",noMeds:"No medicines added.",addMed:"Add medicine",next:"Next dose",late:"Overdue",taken:"Taken",skip:"Skip dose",
+doseOf:"Dose",times:"Times",perDay:n=>n+"× daily",
+testsT:"Tests you've done",noTests:"No test results yet.",all:"View all",measT:"BMI, body measurements & surface area",
+noMeas:"Add your height and weight to calculate BMI, surface area and fat distribution.",openMeas:"Open body measurements",refill:"Refill soon.",pdf:"Download PDF",pdfWait:"Preparing the file…",pdfErr:"Couldn't create the file — check your connection",pdfTitle:"Health summary",pdfApp:"Get the Elagi app",pdfScan:"Scan the code or open the link"}};
 const K=["h","w","neck","waist","hip"];
 let LANG="ar";try{LANG=localStorage.getItem("elagi.lang")==="en"?"en":"ar"}catch{}window.ELANG=LANG;
 const lg=()=>LANG,t=k=>TX[lg()][k],dir=()=>LANG==="en"?"ltr":"rtl";
@@ -1328,19 +1336,50 @@ const fld=k=>`<div class="field"><div style="display:flex;gap:12px;align-items:c
 
 function bmRead(){const b=S.user.body=S.user.body||{};for(const k of K){const e=document.getElementById("bm_"+k);if(e)b[k]=num(e.value)}return b}
 function bmUpdate(){const b=bmRead(),r=document.getElementById("bmRes");if(r)r.innerHTML=resHtml(b);const h=document.getElementById("bmHist");if(h)h.innerHTML=histHtml(b)}
-function openBM(){
+function bmPage(){
   const u=S.user,b=u.body=u.body||{};
   if(!b.sex)b.sex=u.gender==="ذكر"?"m":u.gender==="أنثى"?"f":"";
-  openSheet(`<div class="bm" dir="${dir()}"><div class="sheet-h"><h3>${t("title")}</h3><button class="icon-btn" data-a="sheetClose" aria-label="x">${ic("x")}</button></div>${langBar()}
+  return `<div class="bm" dir="${dir()}"><div class="sec"><h3>${t("title")}</h3></div>
 <div class="field"><span style="${lab}">${t("sex")}</span><div class="chips">${["m","f"].map(x=>`<button class="chip" aria-pressed="${b.sex===x}" data-a="bmSex" data-v="${x}">${t(x)}</button>`).join("")}</div></div>
-${K.map(fld).join("")}<div class="card" style="margin:6px 0 12px"><b>${t("res")}</b><div id="bmRes" style="margin-top:8px"></div></div>
-<button class="btn primary" data-a="bmSave">${t("save")}</button><div id="bmHist"></div><p class="hint" style="margin-top:14px">${t("disc")}</p></div>`);
-  bmUpdate();
+${K.map(fld).join("")}<div class="card" style="margin:6px 0 12px"><b>${t("res")}</b><div id="bmRes" style="margin-top:8px">${resHtml(b)}</div></div>
+<button class="btn primary" data-a="bmSave">${t("save")}</button><div id="bmHist">${histHtml(b)}</div><p class="hint" style="margin-top:14px">${t("disc")}</p></div>`;
+}
+IC.body='<circle cx="12" cy="5" r="2.5"/><path d="M7 10h10M9.5 10l-1 11M14.5 10l1 11M10 14h4"/>';
+tabTips=bmPage;
+
+const APP_URL="https://omg-medtech.github.io/Elagi-app/";
+const need=(src,g)=>window[g]?Promise.resolve():new Promise((ok,no)=>{const s=document.createElement("script");s.src=src;s.onload=ok;s.onerror=no;document.head.appendChild(s)});
+const CDN="https://cdnjs.cloudflare.com/ajax/libs/";
+async function homePdf(){
+  const src=document.querySelector("#scroller > div");if(!src)return;
+  toast(t("pdfWait"));
+  try{
+    await Promise.all([need(CDN+"html2canvas/1.4.1/html2canvas.min.js","html2canvas"),need(CDN+"jspdf/2.5.1/jspdf.umd.min.js","jspdf"),need(CDN+"qrcode-generator/1.4.4/qrcode.min.js","qrcode")]);
+    const W=794,H=1123,FH=190,en=LANG==="en",name=en?"Elagi":"عِلاجي",lg=n=>logo(n).replace(/ class="(h1|h2|ck)"/g,"");
+    const loc=en?"en-US":"ar-EG-u-nu-latn",date=new Date().toLocaleDateString(loc,{day:"numeric",month:"long",year:"numeric"});
+    const q=qrcode(0,"M");q.addData(APP_URL);q.make();
+    const clone=src.cloneNode(true);clone.querySelectorAll(".no-pdf,button,.acts,[data-a]").forEach(x=>x.remove());
+    const sh=document.createElement("div");sh.dir=dir();
+    sh.style.cssText=`position:absolute;left:-10000px;top:0;width:${W}px;box-sizing:border-box;padding:40px 44px 0;background:#fff;color:#3D464B;font-family:var(--font);--teal:#04A093;--teal-d:#037A70;--teal-soft:#E2F5F3;--coral:#EE7666;--ink:#3D464B;--ink-2:#5E6A70;--line:#E1E8E9;--bg:#F6F9F9;--card:#FFFFFF;--mint:#E2F5F3;--warn:#FFF3E0;--warn-ink:#8A4B00`;
+    sh.innerHTML=`<style>.pdfx .card,.pdfx .item{background:transparent!important;box-shadow:none!important}.pdfx *{animation:none!important}</style>
+<div class="pdfx" style="position:relative;z-index:1"><div style="display:flex;align-items:center;gap:14px;border-bottom:2px solid #E1E8E9;padding-bottom:14px;margin-bottom:18px">${lg(54)}<div><div style="font-size:26px;font-weight:700;color:#037A70">${name}</div><div style="font-size:14px;color:#5E6A70">${t("pdfTitle")} • ${date}</div></div></div><div class="pdfbody"></div></div>`;
+    sh.querySelector(".pdfbody").appendChild(clone);document.body.appendChild(sh);
+    if(document.fonts&&document.fonts.ready)await document.fonts.ready;
+    const pages=Math.max(1,Math.ceil((sh.scrollHeight+FH+24)/H));sh.style.height=pages*H+"px";
+    for(let i=0;i<pages;i++)sh.insertAdjacentHTML("afterbegin",`<div style="position:absolute;left:0;top:${i*H}px;width:${W}px;height:${H}px;overflow:hidden;z-index:0"><div style="position:absolute;left:${(W-340)/2}px;top:${(H-340)/2}px;opacity:.09">${lg(340)}</div><div style="position:absolute;left:0;right:0;top:${H/2-90}px;text-align:center;font-size:150px;font-weight:700;line-height:180px;color:#04A093;opacity:.07;transform:rotate(-30deg);white-space:nowrap;direction:ltr">${name}</div></div>`);
+    sh.insertAdjacentHTML("beforeend",`<div style="position:absolute;left:44px;right:44px;bottom:32px;z-index:1;border-top:2px solid #E1E8E9;padding-top:16px;display:flex;align-items:center;gap:18px"><img src="${q.createDataURL(6,2)}" width="110" height="110" style="image-rendering:pixelated;flex:none" alt=""><div style="flex:1;min-width:0"><div style="font-weight:700;font-size:17px;color:#037A70">${t("pdfApp")}</div><div style="font-size:12.5px;color:#5E6A70;margin:2px 0 4px">${t("pdfScan")}</div><div style="direction:ltr;text-align:start;font-size:14px;color:#3D464B;word-break:break-all">${APP_URL}</div><div style="font-size:11.5px;color:#5E6A70;margin-top:8px">${t("disc")}</div></div></div>`);
+    const cv=await html2canvas(sh,{scale:2,backgroundColor:"#ffffff",useCORS:true,width:W,height:pages*H,windowWidth:W});
+    sh.remove();
+    const pdf=new jspdf.jsPDF({unit:"mm",format:"a4",orientation:"p"});
+    for(let i=0;i<pages;i++){const c=document.createElement("canvas");c.width=cv.width;c.height=H*2;const x=c.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,c.width,c.height);x.drawImage(cv,0,-i*H*2);if(i)pdf.addPage();pdf.addImage(c.toDataURL("image/jpeg",.92),"JPEG",0,0,210,297)}
+    pdf.save("Elagi-"+new Date().toISOString().slice(0,10)+".pdf");
+  }catch(e){console.error(e);document.querySelectorAll(".pdfx").forEach(x=>x.parentNode&&x.parentNode.remove());toast(t("pdfErr"))}
 }
 Object.assign(ACT,{
-  bmOpen(){openBM()},
+  homePdf(){homePdf()},
+  bmOpen(){ACT.tab({dataset:{v:"tips"}})},
   bmSex(el){const b=bmRead();b.sex=el.dataset.v;document.querySelectorAll("[data-a=bmSex]").forEach(x=>x.setAttribute("aria-pressed",x===el));bmUpdate()},
-  bmLang(el){const open=!!document.querySelector(".bm");if(open)bmRead();setLang(el.dataset.v,open)},
+  bmLang(el){if(document.querySelector(".bm"))bmRead();setLang(el.dataset.v)},
   toggleLang(){setLang(LANG==="en"?"ar":"en")},
   async appleSignIn(){
     if(!sb){toast("تعذّر الاتصال بـ Supabase");return}
@@ -1357,9 +1396,46 @@ Object.assign(ACT,{
 });
 document.addEventListener("input",ev=>{if(ev.target.closest&&ev.target.closest(".bm")&&ev.target.id?.startsWith("bm_"))bmUpdate()});
 
+
+/* ===== Home page: personal / treatment / tests / body measurements ===== */
+IC.home='<path d="M4 11l8-7 8 7"/><path d="M6 10v10h12V10"/><path d="M10 20v-5h4v5"/>';
+{
+const loc=()=>LANG==="en"?"en-US":"ar-EG-u-nu-latn",tm=ts=>new Date(ts).toLocaleTimeString(loc(),{hour:"numeric",minute:"2-digit"});
+const dayW=ts=>{const w=dayWord(ts);return LANG==="en"?(w==="غدًا"?"Tomorrow":w==="أمس"?"Yesterday":""):(w&&w!=="اليوم"?w:"")};
+const slots=m=>{const[h,mi]=hhmm(m.nextAt).split(":").map(Number),base=h*60+mi,iv=24/m.perDay*60;return Array.from({length:m.perDay},(_,k)=>Math.round((base+k*iv)%1440)).sort((a,b)=>a-b).map(x=>{const d=new Date();d.setHours(Math.floor(x/60),x%60,0,0);return tm(d)})};
+const mealEn={before:"Take before meals",after:"Take after meals",with:"Take with meals",any:""},meal=m=>(LANG==="en"?mealEn:mealText)[m]||"";
+const nm=o=>LANG==="en"?(o.en||o.ar||o.name):(o.ar||o.en||o.name);
+const rTxt=(x,r)=>LANG!=="en"?resTxt(x,r):x.kind==="bp"?`${r.v}/${r.v2} mmHg${r.p?` • pulse ${r.p}`:""}`:x.kind==="val"?`${r.v}${x.unit?" "+x.unit:""}`:(r.note||"Done");
+const unitTxt=u=>LANG==="en"&&u==="قرص/كبسولة"?"tablet/capsule":u;
+const lnk=(a,txt,v)=>`<button class="btn quiet" style="width:auto;min-height:32px;padding:0 6px" data-a="${a}"${v?` data-v="${v}"`:""}>${txt}</button>`;
+const card=(title,act,inner)=>`<div class="card" style="margin:0 0 14px"><div class="sec" style="margin:0 0 10px"><h3>${title}</h3>${act||""}</div>${inner}</div>`;
+const row=(l,v)=>`<div class="kv"><span>${l}</span><b>${v}</b></div>`,dash="—";
+tabDoses=function(){
+  const u=S.user,b=Object.assign({},u.body||{}),meds=u.meds||[],n=nextDose();
+  if(!b.sex)b.sex=u.gender==="ذكر"?"m":u.gender==="أنثى"?"f":"";
+  const p=card(t("personal"),lnk("editProfile",t("editP")),
+    row(t("name"),esc(`${u.first||""} ${u.last||""}`.trim())||dash)+row(t("age"),u.age?`<span class="ltr">${esc(u.age)}</span> ${t("yrs")}`:dash)+
+    row(t("phone"),u.phone?`<span class="ltr">${esc(u.phone)}</span>`:dash));
+  const cond=(u.cond||[]).filter(Boolean);let tr=row(t("disease"),cond.length?esc(cond.join(LANG==="en"?", ":"، ")):dash);
+  if(!meds.length||!n)tr+=`<p class="hint" style="margin:10px 0">${t("noMeds")}</p><button class="btn primary" data-a="addMedHome">${t("addMed")}</button>`;
+  else{
+    const late=n.nextAt<=Date.now(),dw=dayW(n.nextAt);
+    tr+=`<div class="next" style="margin-top:12px">${late?`<span class="late">${t("late")}</span><br>`:""}<div class="when">${t("next")}: ${dw?dw+" ":""}${tm(n.nextAt)}</div><div class="med ltr" style="display:block;text-align:center">${esc(n.name)}</div><div class="meal">${meal(n.meal)||"&nbsp;"}</div></div>
+<div class="acts"><button class="act ok" data-a="doseTaken" data-id="${esc(n.id)}"><b>${ic("check")}</b>${t("taken")}</button><button class="act no" data-a="doseSkip" data-id="${esc(n.id)}"><b>${ic("x")}</b>${t("skip")}</button></div>`;
+    tr+=meds.filter(m=>m.countable&&m.qty/(m.perDay*(m.dosePer||1))<=5).map(m=>{const d=Math.floor(m.qty/(m.perDay*(m.dosePer||1))),nmz=`<b class="ltr">${esc(m.name)}</b>`;
+      return `<div class="low"><span style="font-size:22px">${ic("warn")}</span><div>${LANG==="en"?(m.qty<=0?`${nmz} is out of stock.`:`${nmz} lasts about ${d} day${d===1?"":"s"}.`):(m.qty<=0?`نفد ${nmz}.`:`المتبقي من ${nmz} يكفي حوالي ${d} يوم.`)} ${t("refill")}</div></div>`}).join("");
+    tr+=`<div class="list" style="margin-top:12px">${meds.slice().sort((a,c)=>a.nextAt-c.nextAt).map(m=>`<div class="item">${medTh(m)}<div class="tx"><b class="ltr">${esc(m.name)}</b><small>${t("doseOf")}: ${m.countable?`<span class="ltr">${m.dosePer}</span> ${esc(unitTxt(m.unit))} • `:""}${t("perDay")(m.perDay)}</small><small>${t("times")}: <span class="ltr">${slots(m).join(" • ")}</span></small>${meal(m.meal)?`<small>${meal(m.meal)}</small>`:""}</div></div>`).join("")}</div>`;
+  }
+  const tc=card(t("treat"),"",tr);
+  const done=(u.tests||[]).filter(x=>(x.results||[]).length).sort((a,c)=>c.results.slice(-1)[0].ts-a.results.slice(-1)[0].ts).slice(0,4);
+  const ts=card(t("testsT"),done.length?lnk("tab",t("all"),"tests"):"",done.length?`<div class="list">${done.map(x=>{const r=x.results.slice(-1)[0];return `<div class="item"><div class="th">${ic(x.kind==="bp"?"heart":"flask",24)}</div><div class="tx"><b>${esc(nm(x))}</b><small class="ltr">${esc(rTxt(x,r))}</small><small>${new Date(r.ts).toLocaleDateString(loc(),{day:"numeric",month:"long",year:"numeric"})}</small></div></div>`}).join("")}</div>`:`<p class="hint" style="margin:0">${t("noTests")}</p>`);
+  const ms=card(t("measT"),"",row(t("wLbl"),b.w?`<span class="ltr">${b.w}</span> ${t("kg")}`:dash)+row(t("hLbl"),b.h?`<span class="ltr">${b.h}</span> ${t("cm")}`:dash)+(b.h&&b.w?resHtml(b):`<p class="hint" style="margin:8px 0 10px">${t("noMeas")}</p>`)+`<button class="btn ghost" style="margin-top:8px" data-a="tab" data-v="tips">${t("openMeas")}</button>`);
+  return `<div dir="${dir()}"><div class="no-pdf" style="display:flex;justify-content:flex-end;margin-bottom:12px"><button class="btn ghost" style="width:auto;min-height:40px;padding:0 16px" data-a="homePdf">${t("pdf")}</button></div>${p}${tc}${ts}${ms}</div>`;
+};
+}
 const ts=tabSettings;
 tabSettings=function(){
-  const card=`<div class="card" style="margin-bottom:14px" dir="${dir()}"><div class="sw"><div>${t("open")}<small>${t("sub")}</small></div><button class="btn quiet" style="width:auto;min-height:40px" data-a="bmOpen">${t("btn")}</button></div>${langBar()}</div>`;
+  const card=`<div class="card" style="margin-bottom:14px" dir="${dir()}">${langBar()}</div>`;
   const mark='<div style="display:grid;gap:10px"><button class="btn ghost" data-a="logout">',h=ts();
   return h.includes(mark)?h.replace(mark,card+mark):h+card;
 };
@@ -1492,6 +1568,7 @@ const D=[["عِلاجي","Elagi"],
 ["تسجيل الخروج","Sign out"],
 ["حذف الحساب وبياناتي","Delete account and my data"],
 ["(7 أيام)","(7 days)"],
+["الرئيسية","Home"],["القياسات","Body"],["قرص/كبسولة","tablet/capsule"],
 ["العربية","العربية"]];
 const norm=s=>s.replace(/[\u064B-\u0652\u0670]/g,""),AR=/[\u0600-\u06FF]/;
 const M=D.map(([a,e])=>[norm(a),e]).sort((x,y)=>y[0].length-x[0].length),EX=new Map(M);
@@ -1509,12 +1586,12 @@ function trTree(r){
 }
 window.applyLang=function(){
   const en=window.ELANG==="en";document.documentElement.lang=en?"en":"ar";document.documentElement.dir=en?"ltr":"rtl";
-  document.title=en?"Elagi — We help you recover":"Elagi — نساعدك لتتعافى";if(en)trTree(document.body);
+  document.title=en?"Elagi — We help you recover":"عِلاجي — نساعدك لتتعافى";if(en)trTree(document.body);
 };
 window.setLang=function(l,reopen){
   window.ELANG=l;LANG=l;try{localStorage.setItem("elagi.lang",l)}catch{}
   if(S.user){S.user.set=S.user.set||{};S.user.set.lang=l;persist()}
-  applyLang();reopen?openBM():render();
+  applyLang();render();
 };
 new MutationObserver(ms=>{
   if(window.ELANG!=="en")return;
