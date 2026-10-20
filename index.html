@@ -1067,9 +1067,13 @@ function cleanUser(u){
   if(u.loc&&!(isFinite(u.loc.lat)&&isFinite(u.loc.lng)))u.loc=null;
   return u;
 }
-async function enterHome(user){
+async function enterHome(user,fast){
+  if(fast){
+    sb.auth.getUserIdentities().then(({data,error})=>{S.googleLinked=!error&&(data?.identities||[]).some(x=>x.provider==="google")}).catch(()=>{S.googleLinked=false});
+  }else{
   try{const au=await Cloud.currentUser();user._authUserId=au.id;user.email=au.email||user.email;cacheLocalProfile(au.id,user)}catch{}
   try{const {data,error}=await sb.auth.getUserIdentities();S.googleLinked=!error&&(data?.identities||[]).some(x=>x.provider==="google")}catch{S.googleLinked=false}
+  }
   cleanUser(user);user.set=Object.assign({voice:true,wake:false},user.set||{});S.user=user;S.view="home";S.tab="doses";S.err="";S.busy=false;S.verify=null;render();wakeSync();setTimeout(checkDue,1200);
 }
 function beginProfileSetup(authUser){
@@ -1296,6 +1300,32 @@ function fileIn(inp){
 if(sb)sb.auth.onAuthStateChange((event)=>{
   if(event==="PASSWORD_RECOVERY"){S.recoveryMode=true;S.err="";S.view="resetPassword";render();}
 });
+/* Fast start: open straight from the local copy, then refresh from the cloud in the background */
+window.__fresh=null;
+const __persist0=persist;
+persist=async function(){
+  if(window.__fresh){window.__localEdit=true;try{await window.__fresh}catch{}}
+  return __persist0.apply(this,arguments);
+};
+async function fastResume(au){
+  let cached=null;try{cached=lsGet("elagi.pwa.data."+au.id)}catch{}
+  if(!cached||!cached.first){return resumeAccount(au)}
+  const user={...cached,email:au.email||cached.email,_authUserId:au.id};
+  window.__localEdit=false;
+  let done;window.__fresh=new Promise(r=>{done=r});
+  await enterHome(user,true);
+  (async()=>{
+    try{
+      const p=await Cloud.get();
+      if(p&&!window.__localEdit&&S.user&&S.view==="home"&&!E&&$("#sheetWrap").hidden&&!A){
+        cleanUser(p);p.set=Object.assign({voice:true,wake:false},p.set||{});
+        const same=JSON.stringify(Object.keys(p).sort().map(k=>[k,p[k]]))===JSON.stringify(Object.keys(S.user).sort().map(k=>[k,S.user[k]]));
+        if(!same){p._authUserId=au.id;S.user=p;render()}
+      }
+    }catch(e){/* offline: keep the local copy */}
+    finally{window.__fresh=null;done()}
+  })();
+}
 /* splash while a saved / returning sign-in is being restored, so the welcome screen never flashes */
 let bootEl=null;
 try{
@@ -1318,7 +1348,7 @@ render();
     const {data,error}=await sb.auth.getSession();if(error)throw error;
     if(S.recoveryMode)return;
     if(!data.session?.user)return;
-    await resumeAccount(data.session.user);
+    await fastResume(data.session.user);
   }catch(e){console.error("Elagi boot failed",e);toast("تعذّر استعادة الجلسة أو بيانات الحساب. سجّل الدخول مجددًا.")}
   finally{bootDone()}
 })();
