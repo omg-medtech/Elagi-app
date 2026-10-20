@@ -1,5 +1,5 @@
 /* Elagi service worker — offline app shell. Bump VERSION to force an update. */
-const VERSION = "elagi-v7";
+const VERSION = "elagi-v9";
 const SHELL = VERSION + "-shell";
 const RUNTIME = VERSION + "-runtime";
 const PRECACHE = ["./", "./manifest.json", "./icons/icon-192.png", "./icons/icon-512.png", "./icons/apple-touch-icon.png", "./icons/favicon-48.png"];
@@ -76,16 +76,19 @@ self.addEventListener("push", e => {
   const title = d.title || "عِلاجي";
   e.waitUntil(self.registration.showNotification(title, {
     body: d.body || "", icon: "icons/icon-192.png", badge: "icons/favicon-48.png",
-    tag: d.tag || "elagi-reminder", renotify: true, requireInteraction: true,
-    vibrate: [300, 150, 300, 150, 300], dir: d.dir || "auto", lang: d.lang || "ar", data: { url: d.url || "./" }
+    tag: d.tag || "elagi-reminder", renotify: true, requireInteraction: true, silent: false,
+    vibrate: [400, 150, 400, 150, 600], timestamp: Date.now(), dir: d.dir || "auto", lang: d.lang || "ar",
+    actions: [{ action: "listen", title: "🔊 استمع" }, { action: "open", title: "فتح التطبيق" }],
+    data: { url: d.url || "./" }
   }));
 });
 self.addEventListener("notificationclick", e => {
   e.notification.close();
-  const target = new URL((e.notification.data && e.notification.data.url) || "./", self.registration.scope).href;
+  const base = new URL((e.notification.data && e.notification.data.url) || "./", self.registration.scope);
+  base.searchParams.set("speak", "1");
   e.waitUntil((async () => {
     const all = await clients.matchAll({ type: "window", includeUncontrolled: true });
-    for (const c of all) { if (c.url.startsWith(self.registration.scope)) { await c.focus(); return; } }
-    await clients.openWindow(target);
+    for (const c of all) { if (c.url.startsWith(self.registration.scope)) { await c.focus(); c.postMessage({ type: "speak" }); return; } }
+    await clients.openWindow(base.href);
   })());
 });
