@@ -1296,6 +1296,20 @@ function fileIn(inp){
 if(sb)sb.auth.onAuthStateChange((event)=>{
   if(event==="PASSWORD_RECOVERY"){S.recoveryMode=true;S.err="";S.view="resetPassword";render();}
 });
+/* splash while a saved / returning sign-in is being restored, so the welcome screen never flashes */
+let bootEl=null;
+try{
+  let has=/[#&?](access_token|code)=/.test(location.hash+location.search);
+  if(!has)for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i)||"";if(/^sb-.*-auth-token$/.test(k)){has=true;break}}
+  if(has){
+    bootEl=document.createElement("div");
+    bootEl.style.cssText="position:fixed;inset:0;z-index:99;background:#F6F9F9;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;color:#04A093;font:700 22px/1.2 system-ui,sans-serif";
+    bootEl.innerHTML='<div style="width:44px;height:44px;border:4px solid #CFE9E6;border-top-color:#04A093;border-radius:50%;animation:bootspin .8s linear infinite"></div><div>عِلاجي</div><style>@keyframes bootspin{to{transform:rotate(360deg)}}</style>';
+    document.body.appendChild(bootEl);
+    setTimeout(()=>{try{bootEl&&bootEl.remove()}catch{}bootEl=null},12000);
+  }
+}catch{}
+const bootDone=()=>{try{bootEl&&bootEl.remove()}catch{}bootEl=null};
 render();
 (async()=>{
   try{
@@ -1305,6 +1319,7 @@ render();
     if(!data.session?.user)return;
     await resumeAccount(data.session.user);
   }catch(e){console.error("Elagi boot failed",e);toast("تعذّر استعادة الجلسة أو بيانات الحساب. سجّل الدخول مجددًا.")}
+  finally{bootDone()}
 })();
 </script>
 <script>
@@ -1626,16 +1641,21 @@ window.__tl=arName;
 showAlarm=function(kind,item,demo){const had=!!A;_sa(kind,item,demo);if(had)return;
   try{const acts=document.querySelector("#alarm .al-acts");if(acts&&S.user?.set?.voice!==false){const b=document.createElement("button");b.className="btn q";b.setAttribute("data-a","alSpeak");b.textContent=LANG==="en"?"🔊 Listen":"🔊 استمع للتنبيه";acts.appendChild(b)}}catch{}
   try{if(kind==="med"&&item&&item.countable&&(+item.qty||0)<=LOWQ){const mid=document.querySelector("#alarm .al-mid");if(mid){const p=document.createElement("p");p.className="al-meal";p.style.cssText="background:rgba(255,255,255,.22);border-radius:12px;padding:6px 12px;font-weight:700";const q=Math.max(0,+item.qty||0);p.textContent=LANG==="en"?(q?`Please buy it — only ${q} left`:"Out of stock — please buy it"):(q?`برجاء شراء الدواء — المتبقي ${q} فقط`:"نفد الدواء — برجاء شراء الدواء");mid.appendChild(p)}}}catch{}}}
-alarmSpeak=function(){
-  if(!A)return;beep();
-  const u=S.user,isMed=A.kind==="med",en=LANG==="en";let nm=isMed?shortName(A.name):A.name,who=u.first||"";
-  if(isMed&&!en){const mm=(u.meds||[]).find(x=>x.id===A.id),ab=mm&&mm.ar&&window.__ar?__ar.arBrand(mm.ar):"";if(ab)nm=ab}
-  if(en){if(!isMed){const t0=(u.tests||[]).find(x=>x.id===A.id);if(t0&&t0.en)nm=t0.en}}
+const alarmTxt=a=>{
+  const u=S.user,isMed=a.kind==="med",en=LANG==="en";let nm=isMed?shortName(a.name):a.name,who=u.first||"";
+  if(isMed&&!en){const mm=(u.meds||[]).find(x=>x.id===a.id),ab=mm&&mm.ar&&window.__ar?__ar.arBrand(mm.ar):"";if(ab)nm=ab}
+  if(en){if(!isMed){const t0=(u.tests||[]).find(x=>x.id===a.id);if(t0&&t0.en)nm=t0.en}}
   else{nm=arName(nm).trim();who=arName(who).trim()}
-  const med=isMed?(u.meds||[]).find(x=>x.id===A.id):null,low=!!(med&&med.countable&&(+med.qty||0)<=LOWQ);
+  const med=isMed?(u.meds||[]).find(x=>x.id===a.id):null,low=!!(med&&med.countable&&(+med.qty||0)<=LOWQ);
   let txt=en?(isMed?`Don't forget your ${nm} dose ${who}`:`It's time for ${nm} ${who}`):(isMed?`لا تنسَ جرعة دواء ${nm} يا ${who}`:`حان موعد ${nm} يا ${who}`);
   if(low)txt+=en?`. Please buy ${nm} ${who}`:`. برجاء شراء دواء ${nm} يا ${who}`;
-  setTimeout(()=>{if(!A)return;Voice.say([{t:txt.replace(/\s+/g," ").trim(),lang:en?"en-US":"ar-SA"}])},950);
+  return{txt:txt.replace(/\s+/g," ").trim(),en};
+};
+window.__alarmText=(kind,item)=>{try{return alarmTxt({kind,id:item.id,name:kind==="med"?item.name:item.ar}).txt}catch{return""}};
+alarmSpeak=function(){
+  if(!A)return;beep();
+  const {txt,en}=alarmTxt(A);
+  setTimeout(()=>{if(!A)return;Voice.say([{t:txt,lang:en?"en-US":"ar-SA"}])},950);
 };
 }
 /* ===== Local fingerprint lock (WebAuthn platform authenticator) ===== */
