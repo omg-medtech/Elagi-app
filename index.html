@@ -874,16 +874,16 @@ function vResetPassword(){
 function vProfileSetup(){
   const d=S.draft||{};
   return `<div class="bar"><span class="sp"></span><h2>إعداد ملفك</h2><span class="sp"></span></div>
-   <div class="scroll"><h1 class="t">أكمل بياناتك الأساسية</h1><p class="lead">أكمل رقم هاتفك. سنحدد موقعك تلقائيًا عند التسجيل، ويمكنك تغييره لاحقًا.</p>
+   <div class="scroll"><h1 class="t">أكمل بياناتك الأساسية</h1><p class="lead">أكمل رقم هاتفك. الموقع مطلوب لإكمال التسجيل ويُحدَّد تلقائيًا، ويمكنك تغييره لاحقًا.</p>
    <label class="field"><span>الاسم الأول</span><input class="inp" data-k="first" autocomplete="given-name" value="${esc(d.first||"")}"></label>
    <label class="field"><span>اسم العائلة</span><input class="inp" data-k="last" autocomplete="family-name" value="${esc(d.last||"")}"></label>
    <label class="field"><span>رقم الهاتف</span><input class="inp ltr" style="width:100%" data-k="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="01xxxxxxxxx" value="${esc(d.phone||"")}"></label>
    <div class="card" style="display:grid;gap:10px"><b>الموقع</b>
-    <p class="hint" style="margin:0">${S.busy&&!d.loc?"جارٍ تحديد موقعك تلقائيًا…":d.loc?"تم تحديد موقعك تلقائيًا":"لم نتمكن من تحديد موقعك. يمكنك المتابعة وتحديده لاحقًا."}</p>
+    <p class="hint" style="margin:0">${S.busy&&!d.loc?"جارٍ تحديد موقعك تلقائيًا…":d.loc?"تم تحديد موقعك تلقائيًا":"لم نتمكن من تحديد موقعك. اسمح بالموقع في المتصفح وشغّل GPS ثم اضغط إعادة المحاولة."}</p>
     <button class="btn ghost" data-a="setupLocation" ${S.busy?"disabled":""}>${d.loc?"تغيير الموقع":"إعادة المحاولة"}</button>
    </div>
    ${S.err?`<p class="err" role="alert">${esc(S.err)}</p>`:""}
-   </div><div class="foot"><button class="btn primary" data-a="finishSetup" ${S.busy?"disabled":""}>${S.busy?"جارٍ حفظ ملفك…":"حفظ وإكمال التسجيل"}</button></div>`;
+   </div><div class="foot"><button class="btn primary" data-a="finishSetup" ${S.busy||!d.loc?"disabled":""}>${S.busy?"جارٍ حفظ ملفك…":"حفظ وإكمال التسجيل"}</button></div>`;
 }
 const perDayAr=n=>n===1?"مرة واحدة":n===2?"مرتين":n<=10?`${n} مرات`:`${n} مرة`;
 function medLine(m){return `${perDayAr(+m.perDay)} يوميًا • الجرعة القادمة ${fmtTime(m.nextAt)}`}
@@ -1177,6 +1177,7 @@ const ACT={
     if(!first||!last){S.err="اكتب الاسم الأول واسم العائلة.";render();return}
     if(!phoneOk(phone)){S.err="اكتب رقم هاتف صحيحًا.";render();return}
     S.busy=true;S.err="";render();if(!d.loc)d.loc=await getLocation();
+    if(!d.loc||!isFinite(d.loc.lat)||!isFinite(d.loc.lng)){S.busy=false;S.err="تحديد الموقع مطلوب لإكمال التسجيل. اسمح بالموقع وشغّل GPS ثم اضغط إعادة المحاولة.";render();return}
     S.busy=true;S.err="";render();
     try{
       const authUser=await Cloud.currentUser();
@@ -1272,8 +1273,9 @@ render();
 <script>
 /* ===== Body measurements: BMI, BSA, fat distribution (ar/en) ===== */
 (()=>{
+const LOWQ=5;
 const TX={
-ar:{title:"قياسات الجسم",open:"قياسات الجسم ومساحة السطح",sub:"BMI، مساحة السطح، توزيع الدهون",btn:"فتح",lang:"لغة التطبيق",sex:"النوع",m:"ذكر",f:"أنثى",
+ar:{addQty:"إضافة كمية",qNow:"المتبقي حاليًا",qAdd:"الكمية المضافة",qSet:"الكمية الصحيحة",qNew:"الإجمالي الجديد",qModeAdd:"إضافة كمية",qModeEdit:"تعديل الكمية",qSave:"حفظ",qSaved:"تم تحديث الكمية",qBad:"أدخل رقمًا صحيحًا",qUnit:"وحدة",title:"قياسات الجسم",open:"قياسات الجسم ومساحة السطح",sub:"BMI، مساحة السطح، توزيع الدهون",btn:"فتح",lang:"لغة التطبيق",sex:"النوع",m:"ذكر",f:"أنثى",
 h:"الطول (سم)",w:"الوزن (كجم)",neck:"محيط الرقبة (سم)",waist:"محيط الخصر (سم)",hip:"محيط الورك (سم)",
 how_h:"قف مستقيمًا حافي القدمين وظهرك للحائط، وقِس من الأرض حتى أعلى الرأس.",
 how_w:"الأفضل صباحًا بعد دخول الحمام وقبل الأكل، بملابس خفيفة.",
@@ -1290,7 +1292,7 @@ treat:"المرض والأدوية والجرعات والمواعيد",disease:
 doseOf:"الجرعة",times:"المواعيد",perDay:n=>n===1?"مرة يوميًا":n===2?"مرتان يوميًا":n+" مرات يوميًا",
 testsT:"التحاليل التي أجريتها",noTests:"لا توجد تحاليل مسجلة بعد.",all:"عرض الكل",measT:"مؤشر كتلة الجسم وقياسات الجسم ومساحة السطح",
 noMeas:"أضف طولك ووزنك لحساب مؤشر كتلة الجسم ومساحة السطح وتوزيع الدهون.",openMeas:"فتح قياسات الجسم",refill:"جدّد الدواء قريبًا.",pdf:"تنزيل كملف PDF",pdfWait:"جارٍ تجهيز الملف…",pdfErr:"تعذّر إنشاء الملف — تحقق من الاتصال بالإنترنت",pdfTitle:"الملخص الصحي",pdfApp:"حمّل تطبيق عِلاجي",pdfScan:"امسح الرمز أو افتح الرابط",apple:"تفاحي",pear:"كمثري",bioT:"القفل بالبصمة",bioSub:"اطلب البصمة أو قفل الشاشة عند فتح التطبيق",bioOn:"تفعيل",bioOff:"إيقاف",bioUnlock:"افتح بالبصمة",bioHint:"أكّد هويتك لفتح عِلاجي",bioEnabled:"تم تفعيل القفل بالبصمة",bioDisabled:"تم إيقاف القفل",bioNo:"جهازك أو متصفحك لا يدعم البصمة هنا",bioFail:"لم يتم التحقق. حاول مرة أخرى.",pushT:"إشعارات عند إغلاق التطبيق",pushSub:"تصلك تذكيرات الجرعات والتحاليل حتى والتطبيق مغلق",pushOn:"تفعيل",pushOff:"إيقاف",pushOk:"تم تفعيل الإشعارات على هذا الجهاز",pushDenied:"تم رفض إذن الإشعارات. فعّله من إعدادات المتصفح.",pushNo:"هذا الجهاز لا يدعم الإشعارات. على آيفون ثبّت التطبيق على الشاشة الرئيسية أولًا.",pushErr:"تعذّر تفعيل الإشعارات",pushStopped:"تم إيقاف الإشعارات",cam:"كاميرا",gal:"من الصور",clearAll:"حذف كل الأمراض والأدوية",clearQ:"سيتم حذف جميع الأمراض وأدويتها نهائيًا ولا يمكن التراجع.",clearYes:"نعم، احذف الكل",cleared:"تم الحذف",dzSel:"المرض",noDz:"بدون مرض",myMeds:"أدويتي",addDz:"إضافة مرض",dzName:"اسم المرض",dzPh:"مثال: السكري، الضغط",dzSave:"حفظ المرض",dzNone:"أدوية بدون مرض محدد",dzEmpty:"لم تُضف أدوية لهذا المرض بعد.",dzDel:"حذف المرض",dzDelQ:"حذف هذا المرض؟ ستبقى أدويته ضمن «أدوية بدون مرض محدد».",cancel:"إلغاء",remain:"المتبقي",lasts:"يكفي ~",dayW:"يوم",edit:"تعديل",del:"حذف",dzStart:"ابدأ بإضافة مرض، ثم أضف الأدوية التي تعالجه دواءً دواءً."},
-en:{title:"Body measurements",open:"Body measurements & surface area",sub:"BMI, surface area, fat distribution",btn:"Open",lang:"App language",sex:"Sex",m:"Male",f:"Female",
+en:{addQty:"Add stock",qNow:"Currently left",qAdd:"Amount to add",qSet:"Correct amount",qNew:"New total",qModeAdd:"Add stock",qModeEdit:"Edit amount",qSave:"Save",qSaved:"Quantity updated",qBad:"Enter a valid number",qUnit:"units",title:"Body measurements",open:"Body measurements & surface area",sub:"BMI, surface area, fat distribution",btn:"Open",lang:"App language",sex:"Sex",m:"Male",f:"Female",
 h:"Height (cm)",w:"Weight (kg)",neck:"Neck circumference (cm)",waist:"Waist circumference (cm)",hip:"Hip circumference (cm)",
 how_h:"Stand straight and barefoot with your back to a wall. Measure from the floor to the top of the head.",
 how_w:"Best in the morning after using the toilet and before eating, in light clothing.",
@@ -1448,6 +1450,8 @@ const mealEn={before:"Take before meals",after:"Take after meals",with:"Take wit
 const nm=o=>LANG==="en"?(o.en||o.ar||o.name):(o.ar||o.en||o.name);
 const rTxt=(x,r)=>LANG!=="en"?resTxt(x,r):x.kind==="bp"?`${r.v}/${r.v2} mmHg${r.p?` • pulse ${r.p}`:""}`:x.kind==="val"?`${r.v}${x.unit?" "+x.unit:""}`:(r.note||"Done");
 const unitTxt=u=>LANG==="en"&&u==="قرص/كبسولة"?"tablet/capsule":u;
+const lowTxt=(m,full)=>{const q=Math.max(0,+m.qty||0),n=`<b class="ltr">${esc(m.name)}</b>`;
+  return LANG==="en"?(q<=0?`${full?n+" ":""}Out of stock — please buy it`:`${full?n+": ":""}Only ${q} left — please buy it`):(q<=0?`${full?"نفد "+n+" — ":"نفد الدواء — "}برجاء شراء الدواء`:`${full?"المتبقي من "+n+" ":"المتبقي "}${q} فقط — برجاء شراء الدواء`)};
 const lnk=(a,txt,v)=>`<button class="btn quiet" style="width:auto;min-height:32px;padding:0 6px" data-a="${a}"${v?` data-v="${v}"`:""}>${txt}</button>`;
 const card=(title,act,inner)=>`<div class="card" style="margin:0 0 14px"><div class="sec" style="margin:0 0 10px"><h3>${title}</h3>${act||""}</div>${inner}</div>`;
 const row=(l,v)=>`<div class="kv"><span>${l}</span><b>${v}</b></div>`,dash="—";
@@ -1459,16 +1463,15 @@ tabDoses=function(){
     row(t("name"),esc(`${u.first||""} ${u.last||""}`.trim())||dash)+row(t("age"),u.age?`<span class="ltr">${esc(u.age)}</span> ${t("yrs")}`:dash)+
     row(t("phone"),u.phone?`<span class="ltr">${esc(u.phone)}</span>`:dash));
   const {g,oth}=dzGroups(u);let tr=g.length?"":row(t("disease"),dash);
-  const medItem=m=>`<div class="item">${medTh(m)}<div class="tx"><b class="ltr">${esc(m.name)}</b><small>${t("doseOf")}: ${m.countable?`<span class="ltr">${m.dosePer}</span> ${esc(unitTxt(m.unit))} • `:""}${t("perDay")(m.perDay)}</small><small>${t("times")}: <span class="ltr">${slots(m).join(" • ")}</span></small>${meal(m.meal)?`<small>${meal(m.meal)}</small>`:""}</div></div>`;
-  const sec=(title,ms)=>`<div style="margin-top:14px"><div style="font-weight:700;color:var(--teal-d);margin-bottom:6px">${title}</div>${ms.length?`<div class="list">${ms.map(medItem).join("")}</div>`:`<p class="hint" style="margin:0">${t("dzEmpty")}</p>`}</div>`;
-  const grp=g.map(x=>sec(esc(x.n),x.m)).join("")+(oth.length?sec(g.length?t("dzNone"):t("disease"),oth):"");
+  const medItem=m=>`<div class="item">${medTh(m)}<div class="tx"><b class="ltr">${esc(m.name)}</b><small>${t("doseOf")}: ${m.countable?`<span class="ltr">${m.dosePer}</span> ${esc(unitTxt(m.unit))} • `:""}${t("perDay")(m.perDay)}</small><small>${t("times")}: <span class="ltr">${slots(m).join(" • ")}</span></small>${meal(m.meal)?`<small>${meal(m.meal)}</small>`:""}${m.countable&&(+m.qty||0)<=LOWQ?`<small style="color:var(--danger,#C0392B);font-weight:700">${lowTxt(m)}</small>`:""}</div>${m.countable?`<button class="icon-btn" data-a="addStock" data-id="${esc(m.id)}" aria-label="${t("addQty")}">${ic("plus",20)}</button>`:""}<button class="icon-btn" data-a="editMed" data-id="${esc(m.id)}" aria-label="${t("edit")}">${ic("edit",20)}</button><button class="icon-btn" data-a="delMed" data-id="${esc(m.id)}" aria-label="${t("del")}">${ic("trash",20)}</button></div>`;
+  const sec=(title,ms,gi)=>`<div style="margin-top:14px"><div style="display:flex;align-items:center;justify-content:space-between;font-weight:700;color:var(--teal-d);margin-bottom:6px"><span>${title}</span>${gi!=null?`<button class="icon-btn" data-a="dzDel" data-i="${gi}" aria-label="${t("dzDel")}">${ic("trash",20)}</button>`:""}</div>${ms.length?`<div class="list">${ms.map(medItem).join("")}</div>`:`<p class="hint" style="margin:0">${t("dzEmpty")}</p>`}</div>`;
+  const grp=g.map((x,gi)=>sec(esc(x.n),x.m,gi)).join("")+(oth.length?sec(g.length?t("dzNone"):t("disease"),oth):"");
   if(!meds.length||!n)tr+=grp+`<p class="hint" style="margin:10px 0">${t("noMeds")}</p><button class="btn primary" data-a="addMedHome">${t("addMed")}</button>`;
   else{
     const late=n.nextAt<=Date.now(),dw=dayW(n.nextAt);
     tr+=`<div class="next" style="margin-top:12px">${late?`<span class="late">${t("late")}</span><br>`:""}<div class="when">${t("next")}: ${dw?dw+" ":""}${tm(n.nextAt)}</div><div class="med ltr" style="display:block;text-align:center">${esc(n.name)}</div><div class="meal">${meal(n.meal)||"&nbsp;"}</div></div>
 <div class="acts"><button class="act ok" data-a="doseTaken" data-id="${esc(n.id)}"><b>${ic("check")}</b>${t("taken")}</button><button class="act no" data-a="doseSkip" data-id="${esc(n.id)}"><b>${ic("x")}</b>${t("skip")}</button></div>`;
-    tr+=meds.filter(m=>m.countable&&m.qty/(m.perDay*(m.dosePer||1))<=5).map(m=>{const d=Math.floor(m.qty/(m.perDay*(m.dosePer||1))),nmz=`<b class="ltr">${esc(m.name)}</b>`;
-      return `<div class="low"><span style="font-size:22px">${ic("warn")}</span><div>${LANG==="en"?(m.qty<=0?`${nmz} is out of stock.`:`${nmz} lasts about ${d} day${d===1?"":"s"}.`):(m.qty<=0?`نفد ${nmz}.`:`المتبقي من ${nmz} يكفي حوالي ${d} يوم.`)} ${t("refill")}</div></div>`}).join("");
+    tr+=meds.filter(m=>m.countable&&(+m.qty||0)<=LOWQ).map(m=>`<div class="low"><span style="font-size:22px">${ic("warn")}</span><div>${lowTxt(m,true)}</div><button class="btn quiet" style="width:auto;min-height:32px;padding:0 8px" data-a="addStock" data-id="${esc(m.id)}">${t("addQty")}</button></div>`).join("");
     tr+=grp;
   }
   const tc=card(t("treat"),"",tr);
@@ -1481,7 +1484,7 @@ tabDoses=function(){
 tabMeds=function(){
   const u=S.user,{g,oth}=dzGroups(u);
   const item=m=>{const d=m.countable?Math.floor(m.qty/(m.perDay*(m.dosePer||1))):0;
-    return `<div class="item">${medTh(m)}<div class="tx"><b class="ltr">${esc(m.name)}</b><small>${t("perDay")(m.perDay)} • ${t("next")}: ${tm(m.nextAt)}</small>${m.generic?`<small class="ltr">${esc(m.generic)}</small>`:""}${m.countable?`<small>${t("remain")} <span class="ltr">${nfa(m.qty)}</span> ${esc(unitTxt(m.unit||""))} (${t("lasts")} <span class="ltr">${d}</span> ${t("dayW")})</small>`:""}</div><button class="icon-btn" data-a="editMed" data-id="${esc(m.id)}" aria-label="${t("edit")}">${ic("edit",20)}</button><button class="icon-btn" data-a="delMed" data-id="${esc(m.id)}" aria-label="${t("del")}">${ic("trash",20)}</button></div>`};
+    return `<div class="item">${medTh(m)}<div class="tx"><b class="ltr">${esc(m.name)}</b><small>${t("perDay")(m.perDay)} • ${t("next")}: ${tm(m.nextAt)}</small>${m.generic?`<small class="ltr">${esc(m.generic)}</small>`:""}${m.countable?`<small>${t("remain")} <span class="ltr">${nfa(m.qty)}</span> ${esc(unitTxt(m.unit||""))} (${t("lasts")} <span class="ltr">${d}</span> ${t("dayW")})</small>`:""}${m.countable&&(+m.qty||0)<=LOWQ?`<small style="color:var(--danger,#C0392B);font-weight:700">${lowTxt(m)}</small>`:""}</div>${m.countable?`<button class="icon-btn" data-a="addStock" data-id="${esc(m.id)}" aria-label="${t("addQty")}">${ic("plus",20)}</button>`:""}<button class="icon-btn" data-a="editMed" data-id="${esc(m.id)}" aria-label="${t("edit")}">${ic("edit",20)}</button><button class="icon-btn" data-a="delMed" data-id="${esc(m.id)}" aria-label="${t("del")}">${ic("trash",20)}</button></div>`};
   const box=(title,act,ms,add)=>card(title,act,(ms.length?`<div class="list">${ms.map(item).join("")}</div>`:`<p class="hint" style="margin:0 0 10px">${t("dzEmpty")}</p>`)+add);
   const addBtn=(a,i,c)=>`<button class="btn ${c}" style="width:100%;margin-top:8px" data-a="${a}"${i!=null?` data-i="${i}"`:""}>${ic("plus",18)} ${t("addMed")}</button>`;
   const bs="font-size:15px;padding:0 10px";
@@ -1491,7 +1494,7 @@ tabMeds=function(){
 ${!g.length&&!oth.length?`<p class="hint">${t("dzStart")}</p>`:""}
 ${g.map((x,i)=>box(esc(x.n),`<button class="icon-btn" data-a="dzDel" data-i="${i}" aria-label="${t("dzDel")}">${ic("trash",20)}</button>`,x.m,addBtn("dzMed",i,"ghost"))).join("")}
 ${oth.length?box(t("dzNone"),"",oth,""):""}
-${g.length||oth.length?`<button class="btn danger" style="width:100%;margin-top:6px" data-a="dzClearAll">${ic("trash",18)} ${t("clearAll")}</button>`:""}</div>`;
+</div>`;
 };
 }
 
@@ -1563,12 +1566,17 @@ function arName(n){
     return NAMES[k.toLowerCase()]||rev()[k.toUpperCase()]||tl(k)}).join(" ");
 }
 window.__tl=arName;
+{const _sa=showAlarm;
+showAlarm=function(kind,item,demo){const had=!!A;_sa(kind,item,demo);if(had)return;
+  try{if(kind==="med"&&item&&item.countable&&(+item.qty||0)<=LOWQ){const mid=document.querySelector("#alarm .al-mid");if(mid){const p=document.createElement("p");p.className="al-meal";p.style.cssText="background:rgba(255,255,255,.22);border-radius:12px;padding:6px 12px;font-weight:700";const q=Math.max(0,+item.qty||0);p.textContent=LANG==="en"?(q?`Please buy it — only ${q} left`:"Out of stock — please buy it"):(q?`برجاء شراء الدواء — المتبقي ${q} فقط`:"نفد الدواء — برجاء شراء الدواء");mid.appendChild(p)}}}catch{}}}
 alarmSpeak=function(){
   if(!A)return;beep();
   const u=S.user,isMed=A.kind==="med",en=LANG==="en";let nm=isMed?shortName(A.name):A.name,who=u.first||"";
   if(en){if(!isMed){const t0=(u.tests||[]).find(x=>x.id===A.id);if(t0&&t0.en)nm=t0.en}}
   else{nm=arName(nm);who=arName(who)}
-  const txt=en?(isMed?`Don't forget your ${nm} dose ${who}`:`It's time for ${nm} ${who}`):(isMed?`لا تنسَ جرعة دواء ${nm} يا ${who}`:`حان موعد ${nm} يا ${who}`);
+  const med=isMed?(u.meds||[]).find(x=>x.id===A.id):null,low=!!(med&&med.countable&&(+med.qty||0)<=LOWQ);
+  let txt=en?(isMed?`Don't forget your ${nm} dose ${who}`:`It's time for ${nm} ${who}`):(isMed?`لا تنسَ جرعة دواء ${nm} يا ${who}`:`حان موعد ${nm} يا ${who}`);
+  if(low)txt+=en?`. Please buy ${nm} ${who}`:`. برجاء شراء دواء ${nm} يا ${who}`;
   setTimeout(()=>{if(!A)return;Voice.say([{t:txt.replace(/\s+/g," ").trim(),lang:en?"en-US":"ar-SA"}])},950);
 };
 }
@@ -1651,7 +1659,25 @@ window.__push={supported};
 
 window.__dzChips=function(){const u=S.user;if(!u||!(u.cond||[]).length)return"";const cur=(E&&E.cond)||"";
   return `<div class="field"><span style="${lab}">${t("dzSel")}</span><div class="chips"><button class="chip" data-a="edDz" aria-pressed="${!cur}">${t("noDz")}</button>${u.cond.map((c,i)=>`<button class="chip" data-a="edDz" data-i="${i}" aria-pressed="${cur===c}">${esc(c)}</button>`).join("")}</div></div>`};
+let STK=null;
+const stkPrev=()=>{const o=document.getElementById("stPrev"),n=document.getElementById("stN");if(!o||!n||!STK)return;const v=parseInt(n.value);
+  if(!(v>=0)){o.textContent="—";return}o.textContent=String(STK.mode==="add"?STK.q+v:v)};
+const stkSheet=()=>{const m=S.user.meds.find(x=>x.id===STK.id);if(!m)return;const add=STK.mode==="add";
+  openSheet(`<div dir="${dir()}"><div class="sheet-h"><h3>${t("addQty")}</h3><button class="icon-btn" data-a="sheetClose" aria-label="x">${ic("x")}</button></div>
+  <p style="margin:0 0 4px"><b class="ltr">${esc(m.name)}</b></p>
+  <p class="hint" style="margin:0 0 10px">${t("qNow")}: <b class="ltr">${nfa(STK.q)}</b> ${esc(LANG==="en"&&m.unit==="قرص/كبسولة"?"tablet/capsule":(m.unit||""))}</p>
+  <div class="chips" style="margin-bottom:10px"><button class="chip" data-a="stkMode" data-v="add" aria-pressed="${add}">${t("qModeAdd")}</button><button class="chip" data-a="stkMode" data-v="edit" aria-pressed="${!add}">${t("qModeEdit")}</button></div>
+  <label class="field"><span>${add?t("qAdd"):t("qSet")}</span><input class="inp ltr" style="width:100%" id="stN" type="number" inputmode="numeric" min="0" placeholder="0"></label>
+  <p style="margin:6px 0 14px;font-weight:700">${t("qNew")}: <span class="ltr" id="stPrev">—</span></p>
+  <button class="btn primary" data-a="stkSave">${t("qSave")}</button></div>`);
+  setTimeout(()=>{try{document.getElementById("stN").focus()}catch{}},60)};
+document.addEventListener("input",ev=>{if(ev.target&&ev.target.id==="stN")stkPrev()});
 Object.assign(ACT,{
+  addStock(el){const m=S.user.meds.find(x=>x.id===el.dataset.id);if(!m)return;STK={id:m.id,q:Math.max(0,+m.qty||0),mode:"add"};stkSheet()},
+  stkMode(el){if(!STK)return;STK.mode=el.dataset.v;stkSheet()},
+  async stkSave(){const m=STK&&S.user.meds.find(x=>x.id===STK.id),v=parseInt((document.getElementById("stN")||{}).value);
+    if(!m||!(v>=0)){toast(t("qBad"));return}
+    m.qty=STK.mode==="add"?STK.q+v:v;m.countable=true;STK=null;await persist();closeSheet();render();toast(t("qSaved"))},
   edDz(el){if(!E)return;const i=el.dataset.i;E.cond=i==null?"":((S.user.cond||[])[+i]||"");renderEditor()},
   dzClearAll(){openSheet(`<div dir="${dir()}"><div class="sheet-h"><h3>${t("clearAll")}</h3><button class="icon-btn" data-a="sheetClose" aria-label="x">${ic("x")}</button></div><p class="hint">${t("clearQ")}</p><div class="row2"><button class="btn ghost" data-a="sheetClose">${t("cancel")}</button><button class="btn danger" data-a="dzClearYes">${t("clearYes")}</button></div></div>`)},
   async dzClearYes(){S.user.meds=[];S.user.cond=[];await persist();closeSheet();render();toast(t("cleared"))}
@@ -1795,10 +1821,11 @@ const D=[["عِلاجي","Elagi"],
 ["(7 أيام)","(7 days)"],
 ["الرئيسية","Home"],["القياسات","Body"],["لا تنسَ جرعة دواء","Don't forget your medicine dose"],["حان موعد","It's time for"],["ذكّرني بعد 10 دقائق","Remind me in 10 minutes"],["سجّل النتيجة","Record result"],["تخطي","Skip"],["قرص/كبسولة","tablet/capsule"],
 ["تصلك تذكيرات الجرعات والتحاليل حتى والتطبيق مغلق","Dose and test reminders arrive even when the app is closed"],
-["سنحدد موقعك تلقائيًا عند التسجيل، ويمكنك تغييره لاحقًا.","We'll detect your location automatically when you sign up. You can change it later."],
+["الموقع مطلوب لإكمال التسجيل ويُحدَّد تلقائيًا، ويمكنك تغييره لاحقًا.","Location is required to finish signing up and is detected automatically. You can change it later."],
+["تحديد الموقع مطلوب لإكمال التسجيل. اسمح بالموقع وشغّل GPS ثم اضغط إعادة المحاولة.","Location is required to finish signing up. Allow location, turn on GPS, then tap Try again."],
 ["جارٍ تحديد موقعك تلقائيًا…","Detecting your location automatically…"],
 ["تم تحديد موقعك تلقائيًا","Your location was detected automatically"],
-["لم نتمكن من تحديد موقعك. يمكنك المتابعة وتحديده لاحقًا.","Couldn't detect your location. You can continue and set it later."],
+["لم نتمكن من تحديد موقعك. اسمح بالموقع في المتصفح وشغّل GPS ثم اضغط إعادة المحاولة.","Couldn't detect your location. Allow location in the browser, turn on GPS, then tap Try again."],
 ["تغيير الموقع","Change location"],["إعادة المحاولة","Try again"],
 ["العربية","العربية"]];
 const norm=s=>s.replace(/[\u064B-\u0652\u0670]/g,""),AR=/[\u0600-\u06FF]/;
@@ -1833,6 +1860,148 @@ new MutationObserver(ms=>{
 }).observe(document.body,{childList:true,subtree:true,characterData:true});
 applyLang();
 }
+})();
+</script>
+<script>
+/* ===== Medicine name from a photo: on-device OCR (Tesseract.js) + fuzzy match against the drug list ===== */
+(()=>{
+const TJS="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js";
+const LANGP="https://cdn.jsdelivr.net/npm/@tesseract.js-data/eng@1.0.0/4.0.0_best_int";
+const STOP=new Set(("TABLET TABLETS CAPSULE CAPSULES FILM COATED COAT STRIP STRIPS EACH CONTAINS CONTAIN STORE STORAGE KEEP CHILDREN CHILD REACH BATCH EXPIRY EXP DATE PRICE MADE EGYPT EGYPTIAN PHARMA PHARMACEUTICAL PHARMACEUTICALS PHARMACEUTICALS ORAL USE ONLY DOSAGE DOSE DOSES SYRUP SUSPENSION CREAM GEL OINTMENT DROPS DROP INJECTION VIAL VIALS AMPOULE AMPOULES SOLUTION PACK PACKAGE LEAFLET INSIDE READ CAREFULLY BEFORE TAKING AFTER MEALS DAILY TIMES TWICE ONCE PLEASE DIRECTED PHYSICIAN DOCTOR PHARMACIST ROOM TEMPERATURE BELOW ABOVE PROTECT LIGHT MOISTURE PRESCRIPTION PHARMACY LTD CO COMPANY INDUSTRIES LABORATORIES LABS MANUFACTURED MANUFACTURER MFG PROD PRODUCT CAIRO GIZA ALEXANDRIA CITY TENTH RAMADAN OCTOBER REGISTERED TRADE MARK TRADEMARK WARNING WARNINGS SIDE EFFECTS ACTIVE INGREDIENT INGREDIENTS EXCIPIENTS QUANTITY WITH FROM THAT THIS THESE FOR AND THE NOT ARE YOU YOUR MAY SHOULD WILL BEEN HAVE WHICH MORE ALSO ANY ALL CAN USED NEW EXTRA FORTE PLUS RETARD FUMARATE HYDROCHLORIDE POTASSIUM SODIUM BESYLATE MALEATE SULFATE SULPHATE ACETATE CALCIUM MAGNESIUM PHOSPHATE CITRATE TARTRATE SUCCINATE MESYLATE HYDROBROMIDE BROMIDE CHLORIDE NITRATE OXIDE ACID HCL MONOHYDRATE DIHYDRATE ANHYDROUS").split(/\s+/));
+let IDX=null;
+function lev(a,b,k){ // bounded Levenshtein; returns k+1 when above k
+  const n=a.length,m=b.length;if(Math.abs(n-m)>k)return k+1;
+  let prev=Array.from({length:m+1},(_,j)=>j);
+  for(let i=1;i<=n;i++){
+    const cur=[i];let lo=i;
+    for(let j=1;j<=m;j++){const c=Math.min(prev[j]+1,cur[j-1]+1,prev[j-1]+(a[i-1]===b[j-1]?0:1));cur[j]=c;if(c<lo)lo=c}
+    if(lo>k)return k+1;prev=cur;
+  }
+  return prev[m];
+}
+function build(){
+  if(IDX)return IDX;
+  const brand=new Set(),gen=new Set();
+  for(let i=0;i<NU.length;i++){
+    const w=(NU[i].match(/[A-Z][A-Z0-9]*/)||[""])[0];if(w.length>=3&&!STOP.has(w))brand.add(w);
+    for(const g of (GU[i]||"").split(/[^A-Z]+/))if(g.length>=5&&!STOP.has(g))gen.add(g);
+  }
+  const by=s=>{const o={};for(const w of s)(o[w.length]=o[w.length]||[]).push(w);return o};
+  return IDX={brand,gen,bB:by(brand),bG:by(gen)};
+}
+const FIX={"0":"O","1":"I","5":"S","8":"B","2":"Z","6":"G"};
+function cleanWord(t){
+  let w=String(t||"").toUpperCase().replace(/[^A-Z0-9]/g,"");
+  const letters=(w.match(/[A-Z]/g)||[]).length;
+  if(letters>=3&&letters<w.length)w=w.replace(/[0-9]/g,d=>FIX[d]||d); // "C0NC0R" -> "CONCOR"
+  return /[A-Z]/.test(w)?w:"";
+}
+function nearest(w,set,byLen){
+  if(set.has(w))return{w,d:0};
+  const L=w.length,k=L<=5?0:L<=7?1:2;if(!k)return null;
+  let best=null;
+  for(let l=L-k;l<=L+k;l++)for(const c of byLen[l]||[]){if(c.length<5)continue;
+    const d=lev(w,c,k);if(d<=k&&(!best||d<best.d))best={w:c,d};if(best&&best.d===1&&k===1)break;
+  }
+  return best;
+}
+/* words: [{text,conf,h}]; returns {name,generic,strength,alts} or null */
+function matchWords(words,fullText){
+  const ix=build(),maxH=Math.max(1,...words.map(x=>x.h||0));
+  const cand=new Map();
+  for(const x of words){
+    const w=cleanWord(x.text);if(w.length<3||STOP.has(w))continue;
+    const conf=Math.max(.2,(x.conf==null?60:x.conf)/100),size=.4+.6*((x.h||maxH)/maxH),len=Math.min(1,w.length/7);
+    for(const [set,by,gen] of [[ix.brand,ix.bB,false],[ix.gen,ix.bG,true]]){
+      const n=nearest(w,set,by);if(!n)continue;
+      if(w.length<=4&&conf<.6)continue; // short words need a confident read
+      const s=(n.d===0?1:n.d===1?.6:.35)*conf*size*len*(gen?.7:1);
+      const key=(gen?"g:":"b:")+n.w;cand.set(key,Math.max(cand.get(key)||0,s));
+    }
+  }
+  const ranked=[...cand.entries()].filter(r=>r[1]>=.12).sort((a,b)=>b[1]-a[1]);
+  if(!ranked.length)return null;
+  const top=ranked.filter(r=>r[1]>=ranked[0][1]*.25);
+  const brand=top.find(r=>r[0][0]==="b"),gen=top.find(r=>r[0][0]==="g");
+  const sm=String(fullText||"").match(/(\d+(?:[.,]\d+)?)\s*(mg|mcg|µg|ug|g|ml|iu)\b/i);
+  const name=(brand||gen)[0].slice(2);
+  return{name,generic:gen?gen[0].slice(2):"",strength:sm?sm[1].replace(",",".")+" "+sm[2].toLowerCase():"",alts:top.slice(0,4).map(r=>r[0].slice(2))};
+}
+
+/* ---- image preparation ---- */
+async function bitmapOf(file){
+  try{return await createImageBitmap(file,{imageOrientation:"from-image"})}catch{}
+  return await new Promise((res,rej)=>{const u=URL.createObjectURL(file),im=new Image();im.onload=()=>{URL.revokeObjectURL(u);res(im)};im.onerror=rej;im.src=u});
+}
+function canvasOf(bmp,invert){
+  const w0=bmp.width,h0=bmp.height,k=1600/Math.max(w0,h0);
+  const c=document.createElement("canvas");c.width=Math.round(w0*k);c.height=Math.round(h0*k);
+  const x=c.getContext("2d",{willReadFrequently:true});x.drawImage(bmp,0,0,c.width,c.height);
+  const im=x.getImageData(0,0,c.width,c.height),d=im.data,hist=new Uint32Array(256);
+  for(let i=0;i<d.length;i+=4){const g=(d[i]*.299+d[i+1]*.587+d[i+2]*.114)|0;d[i]=g;hist[g]++}
+  const n=c.width*c.height;let a=0,lo=0,hi=255;
+  for(let v=0;v<256;v++){a+=hist[v];if(a>=n*.02){lo=v;break}}
+  a=0;for(let v=255;v>=0;v--){a+=hist[v];if(a>=n*.02){hi=v;break}}
+  const sc=255/Math.max(40,hi-lo);
+  for(let i=0;i<d.length;i+=4){let g=Math.max(0,Math.min(255,(d[i]-lo)*sc));if(invert)g=255-g;d[i]=d[i+1]=d[i+2]=g;d[i+3]=255}
+  x.putImageData(im,0,0);return c;
+}
+
+/* ---- Tesseract worker (lazy; the script + language data are fetched once and then cached) ---- */
+let tp=null,wp=null;
+function loadTess(){
+  if(window.Tesseract)return Promise.resolve();
+  return tp||(tp=new Promise((res,rej)=>{const s=document.createElement("script");s.src=TJS;s.onload=res;s.onerror=()=>{tp=null;rej(new Error("offline"))};document.head.appendChild(s)}));
+}
+function getWorker(){
+  return wp||(wp=(async()=>{
+    await loadTess();
+    let w;
+    try{w=await Tesseract.createWorker("eng",1,{langPath:LANGP})}
+    catch{w=await Tesseract.createWorker("eng",1,{})}
+    await w.setParameters({tessedit_pageseg_mode:"11",preserve_interword_spaces:"1"});
+    return w;
+  })().catch(e=>{wp=null;throw e}));
+}
+function wordsOf(data){
+  let ws=data.words;
+  if(!ws||!ws.length){ws=[];for(const b of data.blocks||[])for(const p of b.paragraphs||[])for(const l of p.lines||[])for(const w of l.words||[])ws.push(w)}
+  return ws.map(w=>({text:w.text,conf:w.confidence,h:w.bbox?w.bbox.y1-w.bbox.y0:0}));
+}
+async function ocrOnce(w,canvas){
+  const {data}=await Promise.race([w.recognize(canvas),new Promise((_,no)=>setTimeout(()=>no(new Error("timeout")),70000))]);
+  return{words:wordsOf(data),text:data.text||""};
+}
+async function localRecognize(file){
+  const w=await getWorker(),bmp=await bitmapOf(file);
+  for(const inv of [false,true]){
+    const r=await ocrOnce(w,canvasOf(bmp,inv));
+    const m=matchWords(r.words,r.text);if(m)return m;
+  }
+  return null;
+}
+window.__ocr={matchWords,localRecognize,cleanWord};
+
+/* ---- replace the photo handler: Claude-viewer AI if present, otherwise on-device OCR ---- */
+applyPhoto=async function(file){
+  try{
+    const {thumb,big}=await prepPhoto(file);if(!E)return;
+    E.photo=thumb;E.recog="busy";renderEditor();
+    const my=E.id;let r=null,offline=false;
+    if(SAMPLE&&SCAPS&&SCAPS.images){try{r=await recognize(big)}catch{r=null}}
+    if(!r||!r.name){try{r=await localRecognize(file)}catch(e){r=null;offline=String(e&&e.message)==="offline"}}
+    if(!E||E.id!==my)return;
+    let hits=[];
+    if(r){for(const q of [((r.name||"")+" "+(r.strength||"")).trim(),r.name,r.generic]){if(q&&q.trim()){hits=searchDrugs(q);if(hits.length)break}}}
+    if(hits.length&&r&&r.name){const nm=String(r.name).toUpperCase(),num=((r.strength||"").match(/[\d.]+/)||[""])[0];
+      const pr=i=>{const n=NU[i];return num&&n.startsWith(nm+" "+num)?0:n.startsWith(nm+" ")||n===nm?1:2};
+      hits=hits.map((h,ix)=>[h,ix]).sort((a,b)=>pr(a[0])-pr(b[0])||a[1]-b[1]).map(x=>x[0])}
+    if(hits.length){E.matches=hits;pickDrug(hits[0]);E.q=r.name||"";E.recog="found"}
+    else{E.recog="miss";if(r&&r.name){E.q=r.name;E.matches=searchDrugs(r.name)}}
+    renderEditor();
+    if(offline)toast("قراءة الصورة تحتاج إنترنت أول مرة. اكتب اسم الدواء أو أعد المحاولة عند الاتصال.");
+  }catch{toast("تعذّر قراءة الصورة، جرّب صورة أخرى")}
+};
 })();
 </script>
 <script>

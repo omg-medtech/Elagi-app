@@ -1,5 +1,5 @@
 /* Elagi service worker — offline app shell. Bump VERSION to force an update. */
-const VERSION = "elagi-v3";
+const VERSION = "elagi-v5";
 const SHELL = VERSION + "-shell";
 const RUNTIME = VERSION + "-runtime";
 const PRECACHE = ["./", "./manifest.json", "./icons/icon-192.png", "./icons/icon-512.png", "./icons/apple-touch-icon.png", "./icons/favicon-48.png"];
