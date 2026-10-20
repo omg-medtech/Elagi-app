@@ -2590,6 +2590,16 @@ tabTests=function(){
   <div class="list">${T.map(t=>{const has=!t.done&&t.at>Date.now()-60000;return `<div class="tcard">${testRow(t,true)}<div class="tq"><button data-a="tOld" data-id="${esc(t.id)}">${ic("plus",18)} إضافة قياس</button><button data-a="tAlert" data-id="${esc(t.id)}">${ic("bell",18)} ${has?"تعديل التنبيه":"إضافة تنبيه"}</button></div></div>`}).join("")}</div>
   ${T.length?"":`<div class="empty"><div class="big">${ic("flask",44)}</div>مثال: قياس ضغط الدم كل صباح، أو تحليل فيتامين د بعد شهر.</div>`}`;
 };
+/* Android app only: one-tap test of the closed-app alarm + speech */
+const oldSettings=tabSettings;
+tabSettings=function(){
+  const h=oldSettings();
+  if(!window.AndroidElagi||!AndroidElagi.testAlarm)return h;
+  const card=`<div class="card" style="margin-bottom:14px"><div class="sw"><div>اختبار التنبيه<small>اضغط ثم أغلق التطبيق تمامًا. بعد 20 ثانية يجب أن يرنّ الجرس وينطق الاسم.</small></div><button class="btn ghost" style="width:auto;min-height:40px" data-a="nTest">اختبار</button></div></div>`;
+  const mark='<div style="display:grid;gap:10px"><button class="btn ghost" data-a="logout">';
+  return h.includes(mark)?h.replace(mark,card+mark):h+card;
+};
+Object.assign(ACT,{nTest(){try{const u=S.user,txt=window.__alarmText?__alarmText("med",{id:"x",name:(u.meds&&u.meds[0]&&u.meds[0].name)||"بانادول"}):"اختبار التنبيه";AndroidElagi.testAlarm(txt);toast("أغلق التطبيق الآن، سيرنّ بعد 20 ثانية")}catch{toast("غير متاح")}}});
 /* speech needs a user gesture on some phones: speak on the first touch if the page was opened from a notification */
 let hint=null;
 function armTap(){
