@@ -1309,7 +1309,7 @@ try{
     setTimeout(()=>{try{bootEl&&bootEl.remove()}catch{}bootEl=null},12000);
   }
 }catch{}
-const bootDone=()=>{try{bootEl&&bootEl.remove()}catch{}bootEl=null};
+const bootDone=()=>{try{bootEl&&bootEl.remove()}catch{}bootEl=null;window.__bootDone=true};
 render();
 (async()=>{
   try{
