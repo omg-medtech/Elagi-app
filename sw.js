@@ -1,5 +1,5 @@
 /* Elagi service worker — offline app shell. Bump VERSION to force an update. */
-const VERSION = "elagi-v10";
+const VERSION = "elagi-v11";
 const SHELL = VERSION + "-shell";
 const RUNTIME = VERSION + "-runtime";
 const PRECACHE = ["./", "./manifest.json", "./icons/icon-192.png", "./icons/icon-512.png", "./icons/apple-touch-icon.png", "./icons/favicon-48.png"];
@@ -25,7 +25,7 @@ self.addEventListener("install", e => {
 
 self.addEventListener("activate", e => {
   e.waitUntil((async () => {
-    for (const k of await caches.keys()) if (!k.startsWith(VERSION)) await caches.delete(k);
+    for (const k of await caches.keys()) if (!k.startsWith(VERSION) && k !== "elagi-db") await caches.delete(k);
     await self.clients.claim();
   })());
 });
@@ -52,6 +52,19 @@ self.addEventListener("fetch", e => {
       }).catch(() => null);
       if (hit) { e.waitUntil(net); return hit; }
       return (await net) || Response.error();
+    })());
+    return;
+  }
+
+  // The drug list never changes under the same file name (db-N.json): cache first, no background re-download.
+  if (/\/db-\d+\.json$/.test(url.pathname)) {
+    e.respondWith((async () => {
+      const cache = await caches.open("elagi-db");
+      const hit = await cache.match(req);
+      if (hit) return hit;
+      const res = await fetch(req);
+      if (res && res.ok) cache.put(req, res.clone());
+      return res;
     })());
     return;
   }
