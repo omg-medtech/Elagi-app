@@ -1,5 +1,5 @@
 /* Elagi service worker — offline app shell. Bump VERSION to force an update. */
-const VERSION = "elagi-v9";
+const VERSION = "elagi-v10";
 const SHELL = VERSION + "-shell";
 const RUNTIME = VERSION + "-runtime";
 const PRECACHE = ["./", "./manifest.json", "./icons/icon-192.png", "./icons/icon-512.png", "./icons/apple-touch-icon.png", "./icons/favicon-48.png"];
@@ -41,17 +41,17 @@ self.addEventListener("fetch", e => {
   // Never intercept Supabase (auth + data) or other APIs: data must always be live.
   if (url.hostname.endsWith("supabase.co") || url.hostname.endsWith("supabase.in")) return;
 
-  // Page loads: network first (so updates arrive), fall back to the cached shell offline.
+  // Page loads: show the cached app instantly, refresh it in the background (the new version is used next time).
   if (req.mode === "navigate") {
     e.respondWith((async () => {
       const shell = await caches.open(SHELL);
-      try {
-        const res = await timeout(fetch(req), 4000);
-        if (res && res.ok && url.origin === location.origin) { shell.put("./", res.clone()); }
+      const hit = (await shell.match("./")) || (await shell.match(req, { ignoreSearch: true }));
+      const net = fetch(req).then(res => {
+        if (res && res.ok && url.origin === location.origin) shell.put("./", res.clone());
         return res;
-      } catch {
-        return (await shell.match(req, { ignoreSearch: true })) || (await shell.match("./")) || Response.error();
-      }
+      }).catch(() => null);
+      if (hit) { e.waitUntil(net); return hit; }
+      return (await net) || Response.error();
     })());
     return;
   }

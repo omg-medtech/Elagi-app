@@ -1301,10 +1301,11 @@ let bootEl=null;
 try{
   let has=/[#&?](access_token|code)=/.test(location.hash+location.search);
   if(!has)for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i)||"";if(/^sb-.*-auth-token$/.test(k)){has=true;break}}
-  if(has){
+  if(has&&!/ElagiAPK/.test(navigator.userAgent)){
     bootEl=document.createElement("div");
-    bootEl.style.cssText="position:fixed;inset:0;z-index:99;background:#F6F9F9;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;color:#04A093;font:700 22px/1.2 system-ui,sans-serif";
-    bootEl.innerHTML='<div style="width:44px;height:44px;border:4px solid #CFE9E6;border-top-color:#04A093;border-radius:50%;animation:bootspin .8s linear infinite"></div><div>عِلاجي</div><style>@keyframes bootspin{to{transform:rotate(360deg)}}</style>';
+    let dk=false;try{const m=localStorage.getItem("elagi.theme")||"auto";dk=m==="dark"||(m!=="light"&&matchMedia("(prefers-color-scheme: dark)").matches)}catch{}
+    bootEl.style.cssText="position:fixed;inset:0;z-index:99;background:"+(dk?"#0F1719":"#F6F9F9")+";display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;color:#04A093;font:700 22px/1.2 system-ui,sans-serif";
+    bootEl.innerHTML='<svg width="150" height="150" viewBox="0 0 200 200" aria-hidden="true"><defs><clipPath id="bcp"><path d="M-70 0a30 30 0 0 1 30-30h80a30 30 0 0 1 0 60h-80a30 30 0 0 1-30-30z" transform="translate(0 0)"/></clipPath></defs><g transform="translate(100 100) rotate(-45)"><g clip-path="url(#bcp)"><rect class="bl1" x="-70" y="-30" width="66" height="60" fill="#EE7666"/><rect class="bl2" x="4" y="-30" width="66" height="60" fill="#04A093"/></g></g><path class="bl3" d="M78 98 L93 113 L124 78" pathLength="1" fill="none" stroke="#fff" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/></svg><div style="opacity:.9">عِلاجي</div><style>.bl1,.bl2{transform-box:fill-box}.bl1{transform-origin:left center;animation:bl1 2.8s ease-in-out infinite}.bl2{transform-origin:right center;animation:bl2 2.8s ease-in-out infinite}.bl3{stroke-dasharray:1;animation:bl3 2.8s ease-in-out infinite}@keyframes bl1{0%{transform:scaleX(0)}30%,100%{transform:scaleX(1)}}@keyframes bl2{0%,30%{transform:scaleX(0)}60%,100%{transform:scaleX(1)}}@keyframes bl3{0%,60%{stroke-dashoffset:1}85%,100%{stroke-dashoffset:0}}</style>';
     document.body.appendChild(bootEl);
     setTimeout(()=>{try{bootEl&&bootEl.remove()}catch{}bootEl=null},12000);
   }
@@ -2009,7 +2010,9 @@ window.__notifEnsure=async()=>{
 };
 const steps=()=>`<ol style="margin:8px 0 0;padding-inline-start:20px;display:grid;gap:6px;font-size:14.5px">${t("nSteps").map(x=>`<li>${esc(x)}</li>`).join("")}</ol><p class="hint" style="margin:10px 0 0">${esc(t("nHelp2"))}</p>`;
 let asked=false;
+window.__apk=/ElagiAPK/.test(navigator.userAgent);
 window.__notifCard=function(){
+  if(window.__apk)return `<div class="card" style="display:grid;gap:6px;margin-top:14px"><b>${t("nTitle")}</b><p style="margin:0;color:var(--teal-d);font-weight:700">✓ تنبيهات التطبيق تعمل مباشرة من الهاتف حتى والتطبيق مغلق</p></div>`;
   const p=perm();let body;
   if(p==="unsupported")body=`<p class="hint" style="margin:0">${esc(t("nUnsup"))}</p>`;
   else if(p==="granted")body=`<p style="margin:0;color:var(--teal-d);font-weight:700">${t("nOn")}</p>`;
@@ -2036,7 +2039,7 @@ document.addEventListener("visibilitychange",()=>{if(!document.hidden&&S.view===
 const td=tabDoses;
 tabDoses=function(){
   const h=td.apply(this,arguments);
-  if(!sup()||(perm()==="granted"&&S.user&&S.user.push))return h;
+  if(window.__apk||!sup()||(perm()==="granted"&&S.user&&S.user.push))return h;
   const den=perm()==="denied";
   const b=`<div class="card nbanner" style="margin:0 0 14px;background:var(--mint);border-color:var(--teal)"><div style="display:flex;gap:12px;align-items:center"><span style="font-size:26px;color:var(--teal-d);display:grid">${ic("bell",26)}</span><div style="flex:1;min-width:0"><b>${t("nTitle")}</b><div class="hint" style="margin:2px 0 0">${t("nBanner")}</div></div></div><button class="btn primary" style="margin-top:12px;min-height:46px" data-a="${den?"notifHelp":"notifAsk"}">${den?t("nHow"):t("nAsk")}</button></div>`;
   return h.replace(/^(<div dir="[^"]*">)/,"$1"+b);
