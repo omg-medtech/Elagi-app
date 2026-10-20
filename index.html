@@ -1352,8 +1352,11 @@ try{
     setTimeout(()=>{try{bootEl&&bootEl.remove()}catch{}bootEl=null},12000);
   }
 }catch{}
-const bootDone=()=>{try{bootEl&&bootEl.remove()}catch{}bootEl=null;window.__bootDone=true};
-render();
+let __skipRender=false;
+try{if(/[#&?](access_token|code)=/.test(location.hash+location.search)||Object.keys(localStorage).some(k=>/^sb-.*-auth-token$/.test(k)))__skipRender=true}catch{}
+const bootDone=()=>{try{bootEl&&bootEl.remove()}catch{}bootEl=null;if(__skipRender){__skipRender=false;if(!S.user)render()}window.__bootDone=true};
+if(!__skipRender)render();
+setTimeout(()=>{if(__skipRender){__skipRender=false;if(!S.user)render()}},7000);
 (async()=>{
   try{
     if(!sb)return;
