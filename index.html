@@ -227,6 +227,41 @@ p.lead{margin:0 0 18px;color:var(--ink-2)}
 .social{display:flex;gap:16px;justify-content:center;margin-top:14px}
 .sbtn{width:60px;height:60px;border-radius:50%;border:2px solid var(--line);background:var(--card);display:grid;place-items:center;color:var(--ink);transition:transform .12s}.sbtn:active{transform:scale(.95)}.sbtn:disabled{opacity:.5}
 .latin{display:none}
+
+/* ===== v6 finishing touches ===== */
+:root{--ease:cubic-bezier(.2,.8,.2,1);--shadow-1:0 1px 2px rgba(16,40,44,.05),0 4px 14px rgba(16,40,44,.05);--shadow-2:0 2px 4px rgba(16,40,44,.06),0 10px 28px rgba(16,40,44,.09)}
+.ltr{max-width:100%;overflow-wrap:anywhere}
+/* medicine rows: the name never squeezes the layout */
+.item{align-items:flex-start;flex-wrap:wrap;gap:12px;padding:14px;box-shadow:var(--shadow-1);transition:box-shadow .2s var(--ease),transform .2s var(--ease)}
+.item .tx{flex:1 1 0;min-width:0}
+.item .tx>b.ltr{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;overflow:hidden;width:100%;font-size:15.5px;line-height:1.4;font-weight:700;overflow-wrap:anywhere;text-align:start}
+[dir="rtl"] .item .tx>b.ltr{text-align:right}
+.item .tx small{display:block;color:var(--ink-2);font-size:13px;line-height:1.55;margin-top:2px}
+.item .tx small.gen{overflow-wrap:anywhere;text-align:start}
+[dir="rtl"] .item .tx small.gen{text-align:right}
+.item .tx small.lowtag,.lowtag{color:var(--coral-d)!important;font-weight:700}
+:root[data-theme="dark"] .lowtag{color:#FF9C8F!important}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .lowtag{color:#FF9C8F!important}}
+.ia{flex:0 0 100%;display:flex;align-items:center;justify-content:space-between;gap:8px;border-top:1px solid var(--line);padding-top:10px;margin-top:2px}
+.ia-r{display:inline-flex;gap:2px}
+.pill{display:inline-flex;align-items:center;gap:6px;height:38px;padding:0 16px;border-radius:999px;background:var(--mint);color:var(--teal-d);font-weight:600;font-size:14px;transition:transform .12s var(--ease),background .2s}
+.pill:active{transform:scale(.96)}
+@keyframes pls{0%,100%{box-shadow:0 0 0 0 rgba(255,255,255,.55)}50%{box-shadow:0 0 0 10px rgba(255,255,255,0)}}
+.btn.pulse{animation:pls 1.2s ease-in-out infinite}
+.icon-btn.sm{width:40px;height:40px;border-radius:12px}
+.icon-btn{transition:background .15s,transform .12s var(--ease)}
+.icon-btn:active{background:var(--mint);transform:scale(.94)}
+/* surfaces */
+.card{box-shadow:var(--shadow-1);border-color:color-mix(in srgb,var(--line) 70%,transparent)}
+.btn{transition:transform .12s var(--ease),box-shadow .2s,filter .2s}
+.btn:active{transform:scale(.985)}
+.sheet{box-shadow:0 -8px 40px rgba(0,0,0,.18)}
+.low{border:1px solid color-mix(in srgb,var(--warn-ink) 18%,transparent)}
+.sel b.ltr{display:block;text-align:start;font-size:15.5px;line-height:1.4}
+[dir="rtl"] .sel b.ltr,[dir="rtl"] .sel .ltr{text-align:right}
+#edQ::placeholder{font-size:14px}
+#edQ{unicode-bidi:plaintext;text-align:start}
+
 </style>
 </head>
 <body>
@@ -742,12 +777,12 @@ function tResHtml(){
 function renderTE(){
   const e=TE,keep=!$("#sheetWrap").hidden&&TEKEY===e.id;TEKEY=e.id;
   const it=e.item,selCard=it?`<div class="sel"><b>${esc(it.ar)}</b>${it.en?`<div class="ltr">${esc(it.en)}</div>`:""}</div>`:"";
-  openSheet(`<div class="sheet-h"><h3>${e.editing?"تعديل الموعد":"إضافة قياس أو تحليل"}</h3><button class="icon-btn" data-a="sheetClose" aria-label="إغلاق">${ic("x")}</button></div>
+  openSheet(`<div class="sheet-h"><h3>${e.alert?"إضافة تنبيه":e.editing?"تعديل الموعد":"إضافة قياس أو تحليل"}</h3><button class="icon-btn" data-a="sheetClose" aria-label="إغلاق">${ic("x")}</button></div>
   ${e.editing?selCard:`<label class="field"><span>ابحث بالعربي أو الإنجليزي</span><input class="inp" id="tQ" placeholder="مثال: ضغط، سكر، Vitamin D، CBC" value="${esc(e.q)}" autocomplete="off"></label>
    <div class="chips" style="margin-bottom:12px">${QUICK.map(l=>`<button class="chip" data-a="tQuick" data-v="${l}">${l}</button>`).join("")}</div>
    <div class="res" id="tRes">${tResHtml()}</div><div id="tSel">${selCard}</div>`}
-  <label class="field"><span>يوم القياس</span><input class="inp ltr" style="width:100%" id="tDate" type="date" value="${e.date}"></label>
-  <label class="field"><span>وقت القياس</span><input class="inp ltr" style="width:100%" id="tTime" type="time" value="${e.time}"></label>
+  <label class="field"><span>${e.alert?"يوم التنبيه":"يوم القياس"}</span><input class="inp ltr" style="width:100%" id="tDate" type="date" value="${e.date}"></label>
+  <label class="field"><span>${e.alert?"وقت التنبيه":"وقت القياس"}</span><input class="inp ltr" style="width:100%" id="tTime" type="time" value="${e.time}"></label>
   <div class="field"><span style="display:block;font-weight:600;font-size:14.5px;margin-bottom:6px">التكرار</span><div class="chips">${Object.entries(REP).map(([k,l])=>`<button class="chip" data-a="tRep" data-v="${k}" aria-pressed="${e.repeat===k}">${l}</button>`).join("")}</div></div>
   <button class="btn primary" data-a="tSave">حفظ</button>`,keep);
 }
@@ -882,8 +917,9 @@ function vProfileSetup(){
     <p class="hint" style="margin:0">${S.busy&&!d.loc?"جارٍ تحديد موقعك تلقائيًا…":d.loc?"تم تحديد موقعك تلقائيًا":"لم نتمكن من تحديد موقعك. اسمح بالموقع في المتصفح وشغّل GPS ثم اضغط إعادة المحاولة."}</p>
     <button class="btn ghost" data-a="setupLocation" ${S.busy?"disabled":""}>${d.loc?"تغيير الموقع":"إعادة المحاولة"}</button>
    </div>
+   ${window.__notifCard?window.__notifCard():""}
    ${S.err?`<p class="err" role="alert">${esc(S.err)}</p>`:""}
-   </div><div class="foot"><button class="btn primary" data-a="finishSetup" ${S.busy||!d.loc?"disabled":""}>${S.busy?"جارٍ حفظ ملفك…":"حفظ وإكمال التسجيل"}</button></div>`;
+   </div><div class="foot"><button class="btn primary" data-a="finishSetup" ${S.busy||!d.loc||(window.__notifOk&&!window.__notifOk())?"disabled":""}>${S.busy?"جارٍ حفظ ملفك…":"حفظ وإكمال التسجيل"}</button></div>`;
 }
 const perDayAr=n=>n===1?"مرة واحدة":n===2?"مرتين":n<=10?`${n} مرات`:`${n} مرة`;
 function medLine(m){return `${perDayAr(+m.perDay)} يوميًا • الجرعة القادمة ${fmtTime(m.nextAt)}`}
@@ -970,7 +1006,7 @@ function renderEditor(){
    ${e.more?`<input class="inp ltr" style="width:100%;margin-top:10px" id="edMoreN" type="number" inputmode="numeric" min="4" max="24" value="${e.perDay}" aria-label="عدد المرات">`:""}</div>
   <label class="field"><span>موعد الجرعة القادمة</span><input class="inp ltr" style="width:100%" id="edTime" type="time" value="${esc(e.time)}"></label>
   <div class="field"><span style="display:block;font-weight:600;font-size:14.5px">مواعيد التنبيه كل ${+(24/e.perDay).toFixed(2)} ساعة</span><div class="pv-times" id="edTimes">${times.map(t=>`<span>${t}</span>`).join("")}</div></div>
-  ${solid?`<div class="row2"><div class="field"><span style="display:block;font-weight:600;font-size:14.5px;margin-bottom:6px">المتبقي (${esc(e.unit||"قرص")})</span><input class="inp ltr" style="width:100%" id="edQtyN" type="number" inputmode="numeric" min="0" value="${e.qty}" aria-label="عدد المتبقي"></div></div>
+  ${solid?`<div class="row2"><div class="field"><span style="display:block;font-weight:600;font-size:14.5px;margin-bottom:6px">المتبقي (${esc(e.unit||"قرص")})</span><input class="inp ltr" style="width:100%" id="edQtyN" type="number" inputmode="numeric" min="0" value="${e.qty}" aria-label="عدد المتبقي"></div>${window.__edStock?window.__edStock():""}</div>
    <div class="field"><span style="display:block;font-weight:600;font-size:14.5px;margin-bottom:6px">في كل جرعة</span><div class="step"><button data-a="edDose" data-v="-1" aria-label="أنقص">−</button><output>${nfa(e.dosePer)}</output><button data-a="edDose" data-v="1" aria-label="زِد">+</button></div></div>`:`<p class="hint" style="margin:0 0 14px">لا نسأل عن الكمية لأن الدواء سائل أو موضعي.</p>`}
   <div class="field"><span style="display:block;font-weight:600;font-size:14.5px;margin-bottom:6px">طريقة الأخذ</span><div class="chips">${[["before","قبل الأكل"],["after","بعد الأكل"],["with","مع الأكل"],["any","لا يهم"]].map(([k,l])=>`<button class="chip" data-a="edMeal" data-v="${k}" aria-pressed="${e.meal===k}">${l}</button>`).join("")}</div></div>
   ${window.__dzChips?window.__dzChips():""}
@@ -1178,10 +1214,11 @@ const ACT={
     if(!phoneOk(phone)){S.err="اكتب رقم هاتف صحيحًا.";render();return}
     S.busy=true;S.err="";render();if(!d.loc)d.loc=await getLocation();
     if(!d.loc||!isFinite(d.loc.lat)||!isFinite(d.loc.lng)){S.busy=false;S.err="تحديد الموقع مطلوب لإكمال التسجيل. اسمح بالموقع وشغّل GPS ثم اضغط إعادة المحاولة.";render();return}
+    if(window.__notifEnsure&&!(await window.__notifEnsure())){S.busy=false;S.err=window.__tt?window.__tt("nNeed"):"تفعيل الإشعارات مطلوب لإكمال التسجيل.";render();return}
     S.busy=true;S.err="";render();
     try{
       const authUser=await Cloud.currentUser();
-      const user={email:authUser.email||d.email,first,last,phone,age:"",gender:"",avatar:"",tests:[],set:{voice:true,wake:false},cond:[],meds:[],log:[],loc:d.loc,createdAt:Date.now()};
+      const user={email:authUser.email||d.email,first,last,phone,age:"",gender:"",avatar:"",tests:[],set:{voice:true,wake:false},cond:[],meds:[],log:[],loc:d.loc,push:window.__pushSub||null,tz:(()=>{try{return Intl.DateTimeFormat().resolvedOptions().timeZone||""}catch{return""}})(),createdAt:Date.now()};
       await Cloud.put(user);S.draft=null;await enterHome(user);toast("تم حفظ ملفك وموقعك")
     }catch(e){S.busy=false;S.err=cloudMsg(e);render()}
   },
@@ -1450,8 +1487,9 @@ const mealEn={before:"Take before meals",after:"Take after meals",with:"Take wit
 const nm=o=>LANG==="en"?(o.en||o.ar||o.name):(o.ar||o.en||o.name);
 const rTxt=(x,r)=>LANG!=="en"?resTxt(x,r):x.kind==="bp"?`${r.v}/${r.v2} mmHg${r.p?` • pulse ${r.p}`:""}`:x.kind==="val"?`${r.v}${x.unit?" "+x.unit:""}`:(r.note||"Done");
 const unitTxt=u=>LANG==="en"&&u==="قرص/كبسولة"?"tablet/capsule":u;
-const lowTxt=(m,full)=>{const q=Math.max(0,+m.qty||0),n=`<b class="ltr">${esc(m.name)}</b>`;
-  return LANG==="en"?(q<=0?`${full?n+" ":""}Out of stock — please buy it`:`${full?n+": ":""}Only ${q} left — please buy it`):(q<=0?`${full?"نفد "+n+" — ":"نفد الدواء — "}برجاء شراء الدواء`:`${full?"المتبقي من "+n+" ":"المتبقي "}${q} فقط — برجاء شراء الدواء`)};
+const lowTxt=(m,full)=>{const q=Math.max(0,+m.qty||0),en=LANG==="en",
+  msg=en?(q<=0?"Out of stock — please buy it":`Only ${q} left — please buy it`):(q<=0?"نفد الدواء — برجاء شراء الدواء":`المتبقي ${q} فقط — برجاء شراء الدواء`);
+  return full?`<b class="ltr" style="display:block;margin-bottom:2px">${esc(m.name)}</b>${msg}`:msg};
 const lnk=(a,txt,v)=>`<button class="btn quiet" style="width:auto;min-height:32px;padding:0 6px" data-a="${a}"${v?` data-v="${v}"`:""}>${txt}</button>`;
 const card=(title,act,inner)=>`<div class="card" style="margin:0 0 14px"><div class="sec" style="margin:0 0 10px"><h3>${title}</h3>${act||""}</div>${inner}</div>`;
 const row=(l,v)=>`<div class="kv"><span>${l}</span><b>${v}</b></div>`,dash="—";
@@ -1463,15 +1501,15 @@ tabDoses=function(){
     row(t("name"),esc(`${u.first||""} ${u.last||""}`.trim())||dash)+row(t("age"),u.age?`<span class="ltr">${esc(u.age)}</span> ${t("yrs")}`:dash)+
     row(t("phone"),u.phone?`<span class="ltr">${esc(u.phone)}</span>`:dash));
   const {g,oth}=dzGroups(u);let tr=g.length?"":row(t("disease"),dash);
-  const medItem=m=>`<div class="item">${medTh(m)}<div class="tx"><b class="ltr">${esc(m.name)}</b><small>${t("doseOf")}: ${m.countable?`<span class="ltr">${m.dosePer}</span> ${esc(unitTxt(m.unit))} • `:""}${t("perDay")(m.perDay)}</small><small>${t("times")}: <span class="ltr">${slots(m).join(" • ")}</span></small>${meal(m.meal)?`<small>${meal(m.meal)}</small>`:""}${m.countable&&(+m.qty||0)<=LOWQ?`<small style="color:var(--danger,#C0392B);font-weight:700">${lowTxt(m)}</small>`:""}</div>${m.countable?`<button class="icon-btn" data-a="addStock" data-id="${esc(m.id)}" aria-label="${t("addQty")}">${ic("plus",20)}</button>`:""}<button class="icon-btn" data-a="editMed" data-id="${esc(m.id)}" aria-label="${t("edit")}">${ic("edit",20)}</button><button class="icon-btn" data-a="delMed" data-id="${esc(m.id)}" aria-label="${t("del")}">${ic("trash",20)}</button></div>`;
-  const sec=(title,ms,gi)=>`<div style="margin-top:14px"><div style="display:flex;align-items:center;justify-content:space-between;font-weight:700;color:var(--teal-d);margin-bottom:6px"><span>${title}</span>${gi!=null?`<button class="icon-btn" data-a="dzDel" data-i="${gi}" aria-label="${t("dzDel")}">${ic("trash",20)}</button>`:""}</div>${ms.length?`<div class="list">${ms.map(medItem).join("")}</div>`:`<p class="hint" style="margin:0">${t("dzEmpty")}</p>`}</div>`;
+  const medItem=m=>`<div class="item">${medTh(m)}<div class="tx"><b class="ltr nm">${esc(m.name)}</b><small>${t("doseOf")}: ${m.countable?`<span class="ltr">${m.dosePer}</span> ${esc(unitTxt(m.unit))} • `:""}${t("perDay")(m.perDay)}</small><small>${t("times")}: <span class="ltr">${slots(m).join(" • ")}</span></small>${meal(m.meal)?`<small>${meal(m.meal)}</small>`:""}${m.countable&&(+m.qty||0)<=LOWQ?`<small style="color:var(--danger,#C0392B);font-weight:700">${lowTxt(m)}</small>`:""}</div></div>`;
+  const sec=(title,ms,gi)=>`<div style="margin-top:14px"><div style="display:flex;align-items:center;justify-content:space-between;font-weight:700;color:var(--teal-d);margin-bottom:6px"><span>${title}</span></div>${ms.length?`<div class="list">${ms.map(medItem).join("")}</div>`:`<p class="hint" style="margin:0">${t("dzEmpty")}</p>`}</div>`;
   const grp=g.map((x,gi)=>sec(esc(x.n),x.m,gi)).join("")+(oth.length?sec(g.length?t("dzNone"):t("disease"),oth):"");
   if(!meds.length||!n)tr+=grp+`<p class="hint" style="margin:10px 0">${t("noMeds")}</p><button class="btn primary" data-a="addMedHome">${t("addMed")}</button>`;
   else{
     const late=n.nextAt<=Date.now(),dw=dayW(n.nextAt);
     tr+=`<div class="next" style="margin-top:12px">${late?`<span class="late">${t("late")}</span><br>`:""}<div class="when">${t("next")}: ${dw?dw+" ":""}${tm(n.nextAt)}</div><div class="med ltr" style="display:block;text-align:center">${esc(n.name)}</div><div class="meal">${meal(n.meal)||"&nbsp;"}</div></div>
 <div class="acts"><button class="act ok" data-a="doseTaken" data-id="${esc(n.id)}"><b>${ic("check")}</b>${t("taken")}</button><button class="act no" data-a="doseSkip" data-id="${esc(n.id)}"><b>${ic("x")}</b>${t("skip")}</button></div>`;
-    tr+=meds.filter(m=>m.countable&&(+m.qty||0)<=LOWQ).map(m=>`<div class="low"><span style="font-size:22px">${ic("warn")}</span><div>${lowTxt(m,true)}</div><button class="btn quiet" style="width:auto;min-height:32px;padding:0 8px" data-a="addStock" data-id="${esc(m.id)}">${t("addQty")}</button></div>`).join("");
+    tr+=meds.filter(m=>m.countable&&(+m.qty||0)<=LOWQ).map(m=>`<div class="low"><span style="font-size:22px">${ic("warn")}</span><div>${lowTxt(m,true)}</div></div>`).join("");
     tr+=grp;
   }
   const tc=card(t("treat"),"",tr);
@@ -1483,8 +1521,8 @@ tabDoses=function(){
 
 tabMeds=function(){
   const u=S.user,{g,oth}=dzGroups(u);
-  const item=m=>{const d=m.countable?Math.floor(m.qty/(m.perDay*(m.dosePer||1))):0;
-    return `<div class="item">${medTh(m)}<div class="tx"><b class="ltr">${esc(m.name)}</b><small>${t("perDay")(m.perDay)} • ${t("next")}: ${tm(m.nextAt)}</small>${m.generic?`<small class="ltr">${esc(m.generic)}</small>`:""}${m.countable?`<small>${t("remain")} <span class="ltr">${nfa(m.qty)}</span> ${esc(unitTxt(m.unit||""))} (${t("lasts")} <span class="ltr">${d}</span> ${t("dayW")})</small>`:""}${m.countable&&(+m.qty||0)<=LOWQ?`<small style="color:var(--danger,#C0392B);font-weight:700">${lowTxt(m)}</small>`:""}</div>${m.countable?`<button class="icon-btn" data-a="addStock" data-id="${esc(m.id)}" aria-label="${t("addQty")}">${ic("plus",20)}</button>`:""}<button class="icon-btn" data-a="editMed" data-id="${esc(m.id)}" aria-label="${t("edit")}">${ic("edit",20)}</button><button class="icon-btn" data-a="delMed" data-id="${esc(m.id)}" aria-label="${t("del")}">${ic("trash",20)}</button></div>`};
+  const item=m=>{const d=m.countable?Math.floor(m.qty/(m.perDay*(m.dosePer||1))):0,low=m.countable&&(+m.qty||0)<=LOWQ;
+    return `<div class="item med${low?" is-low":""}">${medTh(m)}<div class="tx"><b class="ltr nm" title="${esc(m.name)}">${esc(m.name)}</b><small>${t("perDay")(m.perDay)} • ${t("next")}: ${tm(m.nextAt)}</small>${m.generic?`<small class="ltr gen">${esc(m.generic)}</small>`:""}${m.countable?`<small>${t("remain")} <span class="ltr">${nfa(m.qty)}</span> ${esc(unitTxt(m.unit||""))} (${t("lasts")} <span class="ltr">${d}</span> ${t("dayW")})</small>`:""}${low?`<small class="lowtag">${lowTxt(m)}</small>`:""}</div><div class="ia">${m.countable?`<button class="pill" data-a="addStock" data-id="${esc(m.id)}">${ic("plus",16)} ${t("addQty")}</button>`:"<span></span>"}<span class="ia-r"><button class="icon-btn sm" data-a="editMed" data-id="${esc(m.id)}" aria-label="${t("edit")}">${ic("edit",20)}</button><button class="icon-btn sm" data-a="delMed" data-id="${esc(m.id)}" aria-label="${t("del")}">${ic("trash",20)}</button></span></div></div>`};
   const box=(title,act,ms,add)=>card(title,act,(ms.length?`<div class="list">${ms.map(item).join("")}</div>`:`<p class="hint" style="margin:0 0 10px">${t("dzEmpty")}</p>`)+add);
   const addBtn=(a,i,c)=>`<button class="btn ${c}" style="width:100%;margin-top:8px" data-a="${a}"${i!=null?` data-i="${i}"`:""}>${ic("plus",18)} ${t("addMed")}</button>`;
   const bs="font-size:15px;padding:0 10px";
@@ -1534,14 +1572,28 @@ beep=function(){
 let VS=[];const loadV=()=>{try{VS=speechSynthesis.getVoices()||[]}catch{}};loadV();try{speechSynthesis.addEventListener("voiceschanged",loadV)}catch{}
 const nl=v=>v.lang.toLowerCase().replace("_","-"),sc=v=>{const n=(v.name||"").toLowerCase();return(/google|natural|neural|premium|enhanced|online/.test(n)?3:0)+(v.localService?0:1)-(/compact|espeak/.test(n)?3:0)};
 const pick=lang=>{const l=lang.toLowerCase().replace("_","-"),c=VS.filter(v=>nl(v).startsWith(l.slice(0,2)));c.sort((a,b)=>((nl(b)===l)-(nl(a)===l))*5+sc(b)-sc(a));return c[0]||null};
+const KEEP=[];let unlocked=false;
+const unlock=()=>{if(unlocked)return;unlocked=true;try{speechSynthesis.resume();const u=new SpeechSynthesisUtterance(" ");u.volume=0;speechSynthesis.speak(u)}catch{}};
+["pointerdown","touchstart","keydown","click"].forEach(ev=>document.addEventListener(ev,unlock,{once:true,passive:true,capture:true}));
+let spokeOK=false,wd=0;
 Voice.say=function(parts){try{
   if(!("speechSynthesis"in window)||S.user?.set?.voice===false)return;
-  speechSynthesis.cancel();loadV();
-  for(const p of parts){if(!p.t)continue;const u=new SpeechSynthesisUtterance(p.t);u.lang=p.lang;const v=pick(p.lang);if(v)u.voice=v;u.rate=.9;u.pitch=1;u.volume=1;speechSynthesis.speak(u)}
+  loadV();speechSynthesis.cancel();spokeOK=false;clearTimeout(wd);
+  const go=useVoice=>{try{speechSynthesis.resume();
+    for(const p of parts){if(!p.t)continue;const u=new SpeechSynthesisUtterance(p.t);u.lang=p.lang;const v=useVoice?pick(p.lang):null;if(v)u.voice=v;u.rate=.9;u.pitch=1;u.volume=1;
+      u.onstart=()=>{spokeOK=true};
+      let retried=false;u.onerror=ev=>{if(retried||!v||/cancel|interrupt/i.test(ev&&ev.error||""))return;retried=true;try{const u2=new SpeechSynthesisUtterance(p.t);u2.lang=p.lang;u2.rate=.9;u2.onstart=()=>{spokeOK=true};KEEP.push(u2);speechSynthesis.speak(u2)}catch{}};
+      KEEP.push(u);if(KEEP.length>8)KEEP.shift();speechSynthesis.speak(u)}
+  }catch{}};
+  setTimeout(()=>go(true),140);
+  // some phones accept the call but stay silent (network voice not ready): retry once with the default voice
+  wd=setTimeout(()=>{if(spokeOK||!A)return;try{speechSynthesis.cancel()}catch{}setTimeout(()=>go(false),150);
+    wd=setTimeout(()=>{if(!spokeOK&&A){const b=document.querySelector("#alarm [data-a=alSpeak]");if(b)b.classList.add("pulse")}},3500)},3200);
 }catch{}};
+Object.assign(ACT,{alSpeak(){try{speechSynthesis.cancel()}catch{}alarmSpeak()}});
 /* Latin -> Arabic spelling, so an English drug/person name is read by the SAME Arabic voice */
 const NAMES={omar:"عمر",ahmed:"أحمد",ahmad:"أحمد",mohamed:"محمد",mohammed:"محمد",muhammad:"محمد",mohamad:"محمد",mahmoud:"محمود",ali:"علي",mostafa:"مصطفى",mustafa:"مصطفى",hassan:"حسن",hasan:"حسن",hussein:"حسين",hossam:"حسام",hosam:"حسام",khaled:"خالد",khalid:"خالد",ibrahim:"إبراهيم",youssef:"يوسف",yousef:"يوسف",yusuf:"يوسف",sara:"سارة",sarah:"سارة",mona:"منى",nour:"نور",noor:"نور",fatma:"فاطمة",fatima:"فاطمة",mariam:"مريم",maryam:"مريم",amr:"عمرو",tarek:"طارق",tariq:"طارق",walid:"وليد",waleed:"وليد",karim:"كريم",kareem:"كريم",salma:"سلمى",heba:"هبة",aya:"آية",ayman:"أيمن",adel:"عادل",hany:"هاني",hani:"هاني",sami:"سامي",samy:"سامي",rania:"رانيا",dina:"دينا",nada:"ندى",esraa:"إسراء",asmaa:"أسماء",mohsen:"محسن",abdullah:"عبدالله",abdallah:"عبدالله",abdelrahman:"عبدالرحمن",mina:"مينا"};
-let REV=null;const rev=()=>{if(REV)return REV;REV={};try{for(const[a,e]of Object.entries(ALIAS)){const k=String(e).toUpperCase();if(!REV[k]||a.length<REV[k].length)REV[k]=a}}catch{}return REV};
+let REV=null;const rev=()=>{if(REV)return REV;REV={};try{for(const[a,e]of Object.entries(ALIAS)){const k=String(e).toUpperCase();if(!REV[k]||a.length>REV[k].length)REV[k]=a}}catch{}return REV};
 const DG=[["sch","سك"],["tch","تش"],["ph","ف"],["sh","ش"],["kh","خ"],["gh","غ"],["th","ث"],["ck","ك"],["qu","كو"],["ee","ي"],["oo","و"],["ou","او"],["ai","اي"],["ay","اي"],["ei","اي"],["ey","اي"],["au","او"],["aw","او"],["ow","او"],["oa","و"],["ie","ي"]];
 const SG={b:"ب",d:"د",f:"ف",g:"ج",h:"ه",j:"ج",k:"ك",l:"ل",m:"م",n:"ن",p:"ب",q:"ق",r:"ر",s:"س",t:"ت",v:"ف",x:"كس",z:"ز",w:"و",y:"ي"};
 function tl(w){
@@ -1560,20 +1612,25 @@ function tl(w){
   }
   return o;
 }
+const VOC="عُمَرْ أَحْمَدْ مُحَمَّدْ مَحْمُودْ عَلِيْ مُصْطَفَى حَسَنْ حُسَيْنْ حُسَامْ خَالِدْ إِبْرَاهِيمْ يُوسُفْ سَارَةْ مُنَى نُورْ فَاطِمَةْ مَرْيَمْ عَمْرْو طَارِقْ وَلِيدْ كَرِيمْ سَلْمَى هِبَةْ آيَةْ أَيْمَنْ عَادِلْ هَانِيْ سَامِيْ رَانْيَا دِينَا نَدَى إِسْرَاءْ أَسْمَاءْ مُحْسِنْ مِينَا عَبْدُاللَّهْ عَبْدُالرَّحْمَنْ إِيمَانْ يَاسِرْ مَاجِدْ سَعِيدْ جَمَالْ كَمَالْ نَبِيلْ سَمِيرْ رَامِيْ زِيَادْ بَاسِمْ فَادِيْ شَرِيفْ هِشَامْ وَائِلْ أَسَامَةْ طَلْعَتْ مَدْحَتْ صَلَاحْ رَضَا لَيْلَى زَيْنَبْ خَدِيجَةْ عَائِشَةْ مَاجِدَةْ هَدَى سُهَى".split(" ");
+const dk=w=>String(w).replace(/[\u064B-\u065F\u0670\u0640]/g,"").replace(/[أإآ]/g,"ا").replace(/ة/g,"ه"),VK={};VOC.forEach(v=>{VK[dk(v)]=v});
+const endSk=w=>/[\u0621-\u064A]$/.test(w)&&!/[اىوية]$/.test(w)?w+"\u0652":w;
+const vocal=(w,last)=>{const v=VK[dk(w)];return v?(last?v:v.replace(/\u0652$/,"")):(last?endSk(w):w)};
 function arName(n){
   return String(n||"").trim().split(/\s+/).map(w=>{
-    if(!w||/[؀-ۿ0-9]/.test(w))return w;const k=w.replace(/[^A-Za-z]/g,"");if(!k)return w;
-    return NAMES[k.toLowerCase()]||rev()[k.toUpperCase()]||tl(k)}).join(" ");
+    if(!w||/[0-9]/.test(w))return w;if(/[؀-ۿ]/.test(w))return w;const k=w.replace(/[^A-Za-z]/g,"");if(!k)return w;
+    return NAMES[k.toLowerCase()]||rev()[k.toUpperCase()]||tl(k)}).map((w,i,a)=>vocal(w,i===a.length-1)).join(" ");
 }
 window.__tl=arName;
 {const _sa=showAlarm;
 showAlarm=function(kind,item,demo){const had=!!A;_sa(kind,item,demo);if(had)return;
+  try{const acts=document.querySelector("#alarm .al-acts");if(acts&&S.user?.set?.voice!==false){const b=document.createElement("button");b.className="btn q";b.setAttribute("data-a","alSpeak");b.textContent=LANG==="en"?"🔊 Listen":"🔊 استمع للتنبيه";acts.appendChild(b)}}catch{}
   try{if(kind==="med"&&item&&item.countable&&(+item.qty||0)<=LOWQ){const mid=document.querySelector("#alarm .al-mid");if(mid){const p=document.createElement("p");p.className="al-meal";p.style.cssText="background:rgba(255,255,255,.22);border-radius:12px;padding:6px 12px;font-weight:700";const q=Math.max(0,+item.qty||0);p.textContent=LANG==="en"?(q?`Please buy it — only ${q} left`:"Out of stock — please buy it"):(q?`برجاء شراء الدواء — المتبقي ${q} فقط`:"نفد الدواء — برجاء شراء الدواء");mid.appendChild(p)}}}catch{}}}
 alarmSpeak=function(){
   if(!A)return;beep();
   const u=S.user,isMed=A.kind==="med",en=LANG==="en";let nm=isMed?shortName(A.name):A.name,who=u.first||"";
   if(en){if(!isMed){const t0=(u.tests||[]).find(x=>x.id===A.id);if(t0&&t0.en)nm=t0.en}}
-  else{nm=arName(nm);who=arName(who)}
+  else{nm=arName(nm).trim();who=arName(who).trim()}
   const med=isMed?(u.meds||[]).find(x=>x.id===A.id):null,low=!!(med&&med.countable&&(+med.qty||0)<=LOWQ);
   let txt=en?(isMed?`Don't forget your ${nm} dose ${who}`:`It's time for ${nm} ${who}`):(isMed?`لا تنسَ جرعة دواء ${nm} يا ${who}`:`حان موعد ${nm} يا ${who}`);
   if(low)txt+=en?`. Please buy ${nm} ${who}`:`. برجاء شراء دواء ${nm} يا ${who}`;
@@ -1654,6 +1711,7 @@ async function sync(){try{
 }catch(e){console.warn("push sync",e)}}
 document.addEventListener("visibilitychange",()=>{if(!document.hidden)sync()});
 const eh=enterHome;enterHome=async function(){const r=await eh.apply(this,arguments);setTimeout(sync,1500);return r};
+window.__pushSubscribe=async()=>{const r=await navigator.serviceWorker.ready;let sub=await r.pushManager.getSubscription();if(!sub)sub=await r.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:u8(VAPID)});return JSON.parse(JSON.stringify(sub))};
 window.__push={supported};
 }
 
@@ -1686,14 +1744,40 @@ const ts=tabSettings;
 tabSettings=function(){
   const bioOn=window.__bio&&window.__bio.has(),pushOn=!!(S.user&&S.user.push);
   const srow=(ti,su,on,aOn,aOff,show)=>show?`<div class="sw" style="margin-top:12px"><div>${ti}<small>${su}</small></div><button class="btn ${on?"ghost":"quiet"}" style="width:auto;min-height:40px" data-a="${on?aOff:aOn}">${on?t(aOff):t(aOn)}</button></div>`:"";
-  const card=`<div class="card" style="margin-bottom:14px" dir="${dir()}">${langBar()}${srow(t("bioT"),t("bioSub"),bioOn,"bioOn","bioOff",window.__bio&&window.__bio.ok())}</div>`;
+  const card=`<div class="card" style="margin-bottom:14px" dir="${dir()}">${langBar()}${window.__themeBar?window.__themeBar():""}${srow(t("bioT"),t("bioSub"),bioOn,"bioOn","bioOff",window.__bio&&window.__bio.ok())}</div>`;
   const mark='<div style="display:grid;gap:10px"><button class="btn ghost" data-a="logout">',h=ts();
   return h.includes(mark)?h.replace(mark,card+mark):h+card;
 };
 
 /* ===== Whole-app language (ar/en): runtime translator + direction ===== */
 {
-const D=[["عِلاجي","Elagi"],
+const D=[
+["يوم التنبيه","Reminder date"],
+["وقت التنبيه","Reminder time"],
+["إضافة قياس آخر","Add another measurement"],
+["إضافة قياس قديم","Add an earlier measurement"],
+["إضافة تنبيه","Add reminder"],
+["تعديل التنبيه","Edit reminder"],
+["حذف التحليل","Delete this test"],
+["القياسات السابقة","Previous measurements"],
+["لا توجد قياسات مسجّلة بعد","No measurements recorded yet"],
+["يوم القياس","Measurement date"],
+["وقت القياس","Measurement time"],
+["تسجيل النتيجة","Record result"],
+["حفظ النتيجة","Save result"],
+["ملاحظة (اختياري)","Note (optional)"],
+["الانقباضي (العالي)","Systolic (high)"],
+["الانبساطي (الواطي)","Diastolic (low)"],
+["النبض (اختياري)","Pulse (optional)"],
+["لا يمكن اختيار وقت في المستقبل","You can't pick a time in the future"],
+["اختر يوم القياس","Pick the measurement date"],
+["تم حفظ النتيجة","Result saved"],
+["اكتب القراءتين","Enter both readings"],
+["اكتب النتيجة","Enter the result"],
+["تعديل الموعد","Edit appointment"],
+["أسبوعيًا","Weekly"],
+["شهريًا","Monthly"],
+["عِلاجي","Elagi"],
 ["نساعدك لتتعافى","We help you recover"],
 ["ابدأ بتسجيل حساب جديد أو سجّل الدخول إلى حسابك.","Create a new account or sign in to your account."],
 ["تسجيل جديد","Sign up"],
@@ -1860,6 +1944,213 @@ new MutationObserver(ms=>{
 }).observe(document.body,{childList:true,subtree:true,characterData:true});
 applyLang();
 }
+/* ===== v6: notifications gate, theme, editor stock, pdf v2 ===== */
+Object.assign(TX.ar,{
+nTitle:"الإشعارات",nOn:"الإشعارات مفعّلة ✓",nSub:"ستصلك تذكيرات الجرعات والتحاليل حتى والتطبيق مغلق. تفعيلها مطلوب لإكمال التسجيل.",
+nAsk:"تفعيل الإشعارات",nRecheck:"تحقق مرة أخرى",nHow:"كيف أفعّلها؟",nDeniedT:"الإشعارات محظورة لهذا الموقع",
+nSteps:["اضغط أيقونة القفل 🔒 أو ⓘ بجانب عنوان الموقع في الأعلى.","اختر «الأذونات» أو «إعدادات الموقع».","فعّل «الإشعارات» ثم اختر «السماح».","ارجع للتطبيق واضغط «تحقق مرة أخرى»."],
+nHelp2:"إن ثبّتّ التطبيق: اضغط مطولًا على أيقونة عِلاجي ← معلومات التطبيق ← الإشعارات ← السماح. ولظهور التنبيه فوق التطبيقات فعّل الإشعارات المنبثقة (Pop-up) واستثنِ التطبيق من توفير البطارية.",
+nUnsup:"هذا المتصفح لا يدعم الإشعارات. على iPhone ثبّت التطبيق أولًا: مشاركة ← إضافة إلى الشاشة الرئيسية، ثم افتحه من الأيقونة.",
+nNeed:"تفعيل الإشعارات مطلوب لإكمال التسجيل. اسمح بها ثم أعد المحاولة.",nBanner:"فعّلها حتى تصلك تذكيرات الجرعات حتى والتطبيق مغلق.",nPop:"المتصفحات لا تسمح لأي موقع بالكتابة فوق التطبيقات الأخرى. لأقرب نتيجة: بعد التفعيل افتح إعدادات إشعارات عِلاجي في الهاتف وفعّل «الإشعارات المنبثقة» و«الشاشة المقفلة».",
+thT:"المظهر",thAuto:"تلقائي",thLight:"فاتح",thDark:"ليلي",
+edAdd:"إضافة كمية جديدة",edTot:"الإجمالي الجديد",
+pdfRpt:"تقرير صحي",pdfPg:"صفحة",pdfCont:"(تابع)",pdfMed:"الدواء",pdfDose:"الجرعة",pdfTimes:"المواعيد",pdfMeal:"طريقة الأخذ",pdfLeft:"المتبقي",
+pdfTest:"التحليل",pdfRes:"آخر نتيجة",pdfDate:"التاريخ",pdfNoT:"لا توجد نتائج تحاليل مسجّلة.",pdfEmail:"البريد",pdfBuy:"اشترِ"
+});
+Object.assign(TX.en,{
+nTitle:"Notifications",nOn:"Notifications are on ✓",nSub:"You'll get dose and test reminders even when the app is closed. Required to finish signing up.",
+nAsk:"Enable notifications",nRecheck:"Check again",nHow:"How do I enable them?",nDeniedT:"Notifications are blocked for this site",
+nSteps:["Tap the lock 🔒 or ⓘ icon next to the site address at the top.","Choose “Permissions” or “Site settings”.","Turn on “Notifications” and choose “Allow”.","Come back to the app and tap “Check again”."],
+nHelp2:"If you installed the app: long-press the Elagi icon → App info → Notifications → Allow. To show alerts over other apps turn on pop-up notifications and exclude the app from battery saving.",
+nUnsup:"This browser doesn't support notifications. On iPhone, install the app first: Share → Add to Home Screen, then open it from the icon.",
+nNeed:"Notifications are required to finish signing up. Allow them, then try again.",nBanner:"Turn them on to get dose reminders even when the app is closed.",nPop:"Browsers don't let a website draw over other apps. For the closest result: after enabling, open Elagi's notification settings on your phone and turn on pop-up (heads-up) notifications and lock-screen display.",
+thT:"Appearance",thAuto:"Auto",thLight:"Light",thDark:"Night",
+edAdd:"Add new stock",edTot:"New total",
+pdfRpt:"Health report",pdfPg:"Page",pdfCont:"(cont.)",pdfMed:"Medicine",pdfDose:"Dose",pdfTimes:"Times",pdfMeal:"How to take",pdfLeft:"Left",
+pdfTest:"Test",pdfRes:"Latest result",pdfDate:"Date",pdfNoT:"No test results recorded.",pdfEmail:"Email",pdfBuy:"Buy"
+});
+window.__tt=t;
+
+/* ---------- notifications ---------- */
+{
+const sup=()=>"Notification"in window,perm=()=>sup()?Notification.permission:"unsupported";
+const have=()=>!!window.__pushSub||!!(S.user&&S.user.push);
+window.__notifOk=()=>!sup()||(perm()==="granted");
+window.__notifEnsure=async()=>{
+  if(!sup())return true;
+  try{
+    let p=Notification.permission;
+    if(p==="default")p=await Notification.requestPermission();
+    if(p!=="granted")return false;
+    if(!have()&&window.__pushSubscribe){try{window.__pushSub=await Promise.race([window.__pushSubscribe(),new Promise((_,no)=>setTimeout(()=>no(new Error("timeout")),8000))])}catch(e){console.warn("push subscribe",e)}}
+    return true;
+  }catch(e){console.warn(e);return false}
+};
+const steps=()=>`<ol style="margin:8px 0 0;padding-inline-start:20px;display:grid;gap:6px;font-size:14.5px">${t("nSteps").map(x=>`<li>${esc(x)}</li>`).join("")}</ol><p class="hint" style="margin:10px 0 0">${esc(t("nHelp2"))}</p>`;
+let asked=false;
+window.__notifCard=function(){
+  const p=perm();let body;
+  if(p==="unsupported")body=`<p class="hint" style="margin:0">${esc(t("nUnsup"))}</p>`;
+  else if(p==="granted")body=`<p style="margin:0;color:var(--teal-d);font-weight:700">${t("nOn")}</p>`;
+  else if(p==="denied")body=`<p style="margin:0;color:var(--coral-d);font-weight:700">${t("nDeniedT")}</p>${steps()}<button class="btn ghost" style="margin-top:6px" data-a="notifCheck">${t("nRecheck")}</button>`;
+  else{
+    body=`<p class="hint" style="margin:0">${esc(t("nSub"))}</p><button class="btn primary" data-a="notifAsk">${t("nAsk")}</button><p class="hint" style="margin:0;font-size:13px">${esc(t("nPop"))}</p>`;
+    if(!asked&&S.view==="profileSetup"){asked=true;setTimeout(async()=>{await window.__notifEnsure();if(S.view==="profileSetup")render()},500)}
+  }
+  return `<div class="card" style="display:grid;gap:10px;margin-top:14px"><b>${t("nTitle")}</b>${body}</div>`;
+};
+Object.assign(ACT,{
+  async notifAsk(){
+    if(perm()==="granted"){if(S.user&&!S.user.push)return ACT.togNotif();render();return}
+    const ok=await window.__notifEnsure();
+    if(ok&&S.user&&!S.user.push)await ACT.togNotif();
+    else render();
+    if(!ok&&perm()==="denied")ACT.notifHelp();
+  },
+  notifCheck(){render();if(perm()!=="granted")toast(t("nDeniedT"))},
+  notifHelp(){openSheet(`<div dir="${dir()}"><div class="sheet-h"><h3>${t("nDeniedT")}</h3><button class="icon-btn" data-a="sheetClose" aria-label="x">${ic("x")}</button></div>${steps()}<div class="row2" style="margin-top:14px"><button class="btn ghost" data-a="sheetClose">${t("cancel")}</button><button class="btn primary" data-a="notifCheck">${t("nRecheck")}</button></div></div>`)}
+});
+try{navigator.permissions&&navigator.permissions.query({name:"notifications"}).then(s=>{s.onchange=()=>{if(S.view==="profileSetup"||S.view==="home")render()}})}catch{}
+document.addEventListener("visibilitychange",()=>{if(!document.hidden&&S.view==="profileSetup")render()});
+const td=tabDoses;
+tabDoses=function(){
+  const h=td.apply(this,arguments);
+  if(!sup()||(perm()==="granted"&&S.user&&S.user.push))return h;
+  const den=perm()==="denied";
+  const b=`<div class="card nbanner" style="margin:0 0 14px;background:var(--mint);border-color:var(--teal)"><div style="display:flex;gap:12px;align-items:center"><span style="font-size:26px;color:var(--teal-d);display:grid">${ic("bell",26)}</span><div style="flex:1;min-width:0"><b>${t("nTitle")}</b><div class="hint" style="margin:2px 0 0">${t("nBanner")}</div></div></div><button class="btn primary" style="margin-top:12px;min-height:46px" data-a="${den?"notifHelp":"notifAsk"}">${den?t("nHow"):t("nAsk")}</button></div>`;
+  return h.replace(/^(<div dir="[^"]*">)/,"$1"+b);
+};
+}
+
+/* ---------- theme (auto / light / night) ---------- */
+{
+const K="elagi.theme";let cur="auto";try{cur=localStorage.getItem(K)||"auto"}catch{}
+function apply(m){
+  cur=m;const r=document.documentElement;if(m==="dark"||m==="light")r.setAttribute("data-theme",m);else r.removeAttribute("data-theme");
+  try{localStorage.setItem(K,m)}catch{}
+  const dark=m==="dark"||(m!=="light"&&matchMedia("(prefers-color-scheme: dark)").matches),mt=document.querySelector('meta[name="theme-color"]');
+  if(mt)mt.setAttribute("content",dark?"#0F1719":"#04A093");
+}
+apply(cur);
+window.__themeBar=()=>`<div class="field"><span style="${lab}">${t("thT")}</span><div class="chips">${[["auto","thAuto"],["light","thLight"],["dark","thDark"]].map(([k,l])=>`<button class="chip" aria-pressed="${cur===k}" data-a="setTheme" data-v="${k}">${t(l)}</button>`).join("")}</div></div>`;
+Object.assign(ACT,{async setTheme(el){const v=el.dataset.v;apply(v);if(S.user){S.user.set=S.user.set||{};S.user.set.theme=v;persist()}render()}});
+const eh=enterHome;enterHome=async function(){const r=await eh.apply(this,arguments);const m=S.user&&S.user.set&&S.user.set.theme;if(m&&m!==cur){apply(m);render()}return r};
+try{matchMedia("(prefers-color-scheme: dark)").addEventListener("change",()=>{if(cur==="auto")apply("auto")})}catch{}
+}
+
+/* ---------- add stock inside the medicine editor ---------- */
+{
+window.__edStock=function(){
+  if(!(E&&E.editing&&E.kind==="solid"))return"";const add=+E.addQ||0;
+  return `<div class="field"><span style="${lab}">${t("edAdd")}</span><input class="inp ltr" style="width:100%" id="edAddQ" type="number" inputmode="numeric" min="0" placeholder="0" value="${add||""}" aria-label="${t("edAdd")}"><div class="hint" style="margin:6px 2px 0">${t("edTot")}: <b class="ltr" id="edTot">${nfa((+E.qty||0)+add)}</b></div></div>`};
+document.addEventListener("input",ev=>{const x=ev.target;if(!E||!x)return;
+  if(x.id==="edAddQ")E.addQ=Math.max(0,parseInt(x.value)||0);else if(x.id!=="edQtyN")return;
+  const o=document.getElementById("edTot");if(o)o.textContent=String((+E.qty||0)+(+E.addQ||0))});
+const se=saveEditor;
+saveEditor=function(){if(E&&E.kind==="solid"&&E.addQ>0){E.qty=(+E.qty||0)+E.addQ;E.addQ=0}return se.apply(this,arguments)};
+}
+
+/* ---------- PDF v2: A4, one section never split across pages ---------- */
+{
+const W=794,H=1123,PX=40,HEAD=92,FOOT=104,GAP=14,AV=H-HEAD-FOOT-24;
+const loc=()=>LANG==="en"?"en-US":"ar-EG-u-nu-latn";
+const tmf=ts=>new Date(ts).toLocaleTimeString(loc(),{hour:"numeric",minute:"2-digit"});
+const mealT=m=>LANG==="en"?({before:"Before meals",after:"After meals",with:"With meals",any:"Any time"})[m]||"":({before:"قبل الأكل",after:"بعد الأكل",with:"مع الأكل",any:"لا يهم"})[m]||"";
+const slotsOf=m=>{const[h,mi]=hhmm(m.nextAt).split(":").map(Number),base=h*60+mi,iv=24/m.perDay*60;return Array.from({length:m.perDay},(_,k)=>Math.round((base+k*iv)%1440)).sort((a,b)=>a-b).map(x=>{const d=new Date();d.setHours(Math.floor(x/60),x%60,0,0);return tmf(d)})};
+const per=n=>LANG==="en"?(n===1?"Once daily":n===2?"Twice daily":`${n}× daily`):perDayAr(n);
+const unitT=u=>LANG==="en"&&u==="قرص/كبسولة"?"tab/cap":(u||"");
+const nmOf=o=>LANG==="en"?(o.en||o.ar||o.name):(o.ar||o.en||o.name);
+const rT=(x,r)=>LANG!=="en"?resTxt(x,r):x.kind==="bp"?`${r.v}/${r.v2} mmHg${r.p?` • pulse ${r.p}`:""}`:x.kind==="val"?`${r.v}${x.unit?" "+x.unit:""}`:(r.note||"Done");
+const CSS=`.p2{font-family:var(--font);color:#3D464B;line-height:1.5}.p2 *{box-sizing:border-box}
+.p2 .xs{border:1.5px solid #E1E8E9;border-radius:16px;background:#fff;overflow:hidden}
+.p2 .xh{display:flex;align-items:center;justify-content:space-between;background:#E2F5F3;color:#037A70;padding:9px 16px;font-weight:700;font-size:15px;margin:0}
+.p2 .xh small{font-weight:600;font-size:12px;opacity:.85}
+.p2 .xb{padding:12px 16px}
+.p2 table{width:100%;border-collapse:collapse;font-size:12.5px}
+.p2 th{background:#F6F9F9;color:#5E6A70;font-weight:600;text-align:start;padding:7px 10px;font-size:11.5px;border-bottom:1.5px solid #E1E8E9}
+.p2 td{padding:8px 10px;vertical-align:top;border-bottom:1px solid #EEF2F3}
+.p2 tr:last-child td{border-bottom:0}.p2 tr:nth-child(even) td{background:#FBFDFD}
+.p2 .xnm{font-weight:700;font-size:13px;direction:ltr;text-align:start;unicode-bidi:isolate;overflow-wrap:anywhere}
+.p2 .xgen{font-size:11px;color:#5E6A70;direction:ltr;text-align:start;unicode-bidi:isolate;overflow-wrap:anywhere}
+.p2 .xkv{display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px dashed #E1E8E9;font-size:13px}
+.p2 .xkv:last-child{border-bottom:0}.p2 .xkv span{color:#5E6A70}.p2 .xkv b{font-weight:700;text-align:end}
+.p2 .xlt{direction:ltr;unicode-bidi:isolate;display:inline-block}
+.p2 .xbuy{color:#C0392B;font-weight:700}`;
+const kv=(l,v)=>`<div class="xkv"><span>${l}</span><b>${v}</b></div>`,L=x=>`<span class="xlt">${x}</span>`;
+const secBox=(title,sub,inner)=>`<div class="xs"><h4 class="xh"><span>${title}</span>${sub?`<small>${sub}</small>`:""}</h4><div class="xb">${inner}</div></div>`;
+function bodyRows(b){
+  const r=calc(b),d="—",m=b.sex==="m";let h=kv(t("wLbl"),b.w?`${L(b.w)} ${t("kg")}`:d)+kv(t("hLbl"),b.h?`${L(b.h)} ${t("cm")}`:d);
+  if(!r)return h;const bi=r.bmi<18.5?0:r.bmi<25?1:r.bmi<30?2:3;
+  h+=kv(t("bmi"),`${L(f1(r.bmi))} — ${t("bmiN")[bi]}`)+kv(t("bsa"),`${L(f1(r.bsaM,2))} m²`);
+  if(r.whr!=null)h+=kv(t("whr"),`${L(f1(r.whr,2))}${b.sex?` — ${r.whr>=(m?.9:.85)?t("apple"):t("pear")}`:""}`);
+  if(r.whtr!=null)h+=kv(t("whtr"),L(f1(r.whtr,2)));
+  if(r.bf!=null)h+=kv(t("bf"),`${L(f1(r.bf))}%`)+kv(t("fm"),`${L(f1(r.fm))} ${t("kg")}`)+kv(t("lm"),`${L(f1(r.lm))} ${t("kg")}`);
+  return h;
+}
+const medRow=m=>{const low=m.countable&&(+m.qty||0)<=LOWQ;
+  return `<tr><td style="width:34%"><div class="xnm">${esc(m.name)}</div>${m.generic?`<div class="xgen">${esc(m.generic)}</div>`:""}</td><td>${m.countable?`${L(m.dosePer||1)} ${esc(unitT(m.unit))}`:"—"}<br><span style="color:#5E6A70">${per(m.perDay)}</span></td><td>${L(slotsOf(m).join(" • "))}</td><td>${mealT(m.meal)||"—"}</td><td>${m.countable?`<span class="${low?"xbuy":""}">${L(m.qty)}</span>${low?`<br><span class="xbuy">${t("pdfBuy")}</span>`:""}`:"—"}</td></tr>`};
+const medHead=`<tr><th>${t("pdfMed")}</th><th>${t("pdfDose")}</th><th>${t("pdfTimes")}</th><th>${t("pdfMeal")}</th><th>${t("pdfLeft")}</th></tr>`;
+function buildBlocks(){
+  const u=S.user,b=Object.assign({},u.body||{}),blocks=[];
+  if(!b.sex)b.sex=u.gender==="ذكر"?"m":u.gender==="أنثى"?"f":"";
+  const conds=(u.cond||[]).filter(Boolean);
+  const pers=secBox(t("personal"),"",kv(t("name"),esc(`${u.first||""} ${u.last||""}`.trim())||"—")+kv(t("age"),u.age?`${L(esc(u.age))} ${t("yrs")}`:"—")+kv(t("phone"),u.phone?L(esc(u.phone)):"—")+(u.email?kv(t("pdfEmail"),L(esc(u.email))):"")+kv(t("disease"),conds.length?esc(conds.join("، ")):"—"));
+  blocks.push({h:`<div style="display:grid;grid-template-columns:1fr 1fr;gap:${GAP}px;align-items:start"><div>${pers}</div><div>${secBox(t("bmi"),"",bodyRows(b))}</div></div>`});
+  const groups=conds.map(n=>({n,m:[]})),oth=[];for(const m of u.meds||[]){const g=groups.find(x=>x.n===m.cond);(g?g.m:oth).push(m)}
+  if(oth.length)groups.push({n:conds.length?t("dzNone"):t("treat"),m:oth});
+  for(const g of groups){if(!g.m.length)continue;blocks.push({group:g})}
+  const done=(u.tests||[]).filter(x=>(x.results||[]).length);
+  const rows=done.slice(0,14).map(x=>{const r=x.results.slice(-1)[0];return `<tr><td style="font-weight:700">${esc(nmOf(x))}</td><td>${L(esc(rT(x,r)))}</td><td>${new Date(r.ts).toLocaleDateString(loc(),{day:"numeric",month:"short",year:"numeric"})}</td></tr>`}).join("");
+  blocks.push({h:secBox(t("testsT"),"",rows?`<table><tr><th>${t("pdfTest")}</th><th>${t("pdfRes")}</th><th>${t("pdfDate")}</th></tr>${rows}</table>`:`<p style="margin:0;color:#5E6A70;font-size:13px">${t("pdfNoT")}</p>`).replace('class="xb"','class="xb" style="padding:0"')});
+  return blocks;
+}
+function medBlockHtml(title,rows,cont){return secBox(title+(cont?` ${t("pdfCont")}`:""),`${nfa(rows.length)}`,`<table>${medHead}${rows.join("")}</table>`).replace('class="xb"','class="xb" style="padding:0"')}
+async function homePdf2(){
+  if(!S.user)return;toast(t("pdfWait"));
+  try{
+    await Promise.all([need(CDN+"html2canvas/1.4.1/html2canvas.min.js","html2canvas"),need(CDN+"jspdf/2.5.1/jspdf.umd.min.js","jspdf"),need(CDN+"qrcode-generator/1.4.4/qrcode.min.js","qrcode")]);
+    if(document.fonts&&document.fonts.ready)await document.fonts.ready;
+    const en=LANG==="en",name=en?"Elagi":"عِلاجي",lg=n=>logo(n).replace(/ class="(h1|h2|ck)"/g,""),date=new Date().toLocaleDateString(loc(),{day:"numeric",month:"long",year:"numeric"});
+    const q=qrcode(0,"M");q.addData(APP_URL);q.make();const qr=q.createDataURL(5,1);
+    const host=document.createElement("div");host.dir=dir();host.className="p2";
+    host.style.cssText=`position:fixed;left:-12000px;top:0;width:${W-PX*2}px;--font:${getComputedStyle(document.body).fontFamily};background:#fff`;
+    host.innerHTML=`<style>${CSS}</style><div id="p2m"></div>`;document.body.appendChild(host);
+    const meas=host.querySelector("#p2m"),hOf=html=>{meas.innerHTML=html;return meas.firstElementChild.getBoundingClientRect().height};
+    // measure + split
+    const units=[];
+    for(const b of buildBlocks()){
+      if(b.h){units.push({html:b.h,h:hOf(b.h)});continue}
+      const rows=b.group.m.map(medRow);let cur=[],first=true;
+      const flush=()=>{if(!cur.length)return;const html=medBlockHtml(esc(b.group.n),cur,!first);units.push({html,h:hOf(html)});cur=[];first=false};
+      for(const r of rows){cur.push(r);if(hOf(medBlockHtml(esc(b.group.n),cur,!first))>AV&&cur.length>1){cur.pop();flush();cur.push(r)}}
+      flush();
+    }
+    // first-fit packing, keeps the original order as much as possible
+    const pages=[];let rest=units.slice();
+    while(rest.length){const pg={u:[],h:0};for(let i=0;i<rest.length;){const x=rest[i],add=(pg.u.length?GAP:0)+x.h;if(pg.h+add<=AV||!pg.u.length){pg.u.push(x);pg.h+=add;rest.splice(i,1)}else i++}pages.push(pg)}
+    const N=pages.length,pdf=new jspdf.jsPDF({unit:"mm",format:"a4",orientation:"p"});
+    for(let i=0;i<N;i++){
+      const pgEl=document.createElement("div");pgEl.dir=dir();pgEl.className="p2";
+      pgEl.style.cssText=`position:fixed;left:-12000px;top:0;width:${W}px;height:${H}px;background:#fff;overflow:hidden;--font:${getComputedStyle(document.body).fontFamily}`;
+      pgEl.innerHTML=`<style>${CSS}</style>
+<div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:.06;pointer-events:none"><div>${lg(300)}</div><div style="margin-top:6px;font-size:58px;line-height:72px;font-weight:700;color:#04A093;direction:ltr">${name}</div></div>
+<div style="position:absolute;left:0;right:0;top:0;height:7px;background:linear-gradient(90deg,#04A093,#3CC9BB)"></div>
+<div style="position:absolute;left:${PX}px;right:${PX}px;top:22px;height:${HEAD-30}px;display:flex;align-items:center;gap:14px;border-bottom:2px solid #E1E8E9">${lg(52)}<div style="flex:1"><div style="font-size:25px;font-weight:700;color:#037A70;line-height:1.2">${name}</div><div style="font-size:13px;color:#5E6A70">${t("pdfRpt")} • ${date}</div></div><div style="text-align:end;font-size:13px;color:#5E6A70"><b style="font-size:15px;color:#3D464B">${esc(`${S.user.first||""} ${S.user.last||""}`.trim())}</b></div></div>
+<div style="position:absolute;left:${PX}px;right:${PX}px;top:${HEAD+8}px;display:grid;gap:${GAP}px;align-content:start">${pages[i].u.map(x=>x.html).join("")}</div>
+<div style="position:absolute;left:${PX}px;right:${PX}px;bottom:26px;height:${FOOT-34}px;border-top:2px solid #E1E8E9;padding-top:12px;display:flex;align-items:center;gap:16px"><img src="${qr}" width="64" height="64" style="image-rendering:pixelated;flex:none" alt=""><div style="flex:1;min-width:0"><div style="font-weight:700;font-size:14px;color:#037A70">${t("pdfApp")} • ${t("pdfScan")}</div><div style="direction:ltr;text-align:start;font-size:12px;color:#3D464B;word-break:break-all">${APP_URL}</div><div style="font-size:10.5px;color:#5E6A70;margin-top:3px">${t("disc")}</div></div><div style="font-size:12px;color:#5E6A70;white-space:nowrap">${t("pdfPg")} ${nfa(i+1)} / ${nfa(N)}</div></div>`;
+      document.body.appendChild(pgEl);
+      const cv=await html2canvas(pgEl,{scale:2,backgroundColor:"#ffffff",useCORS:true,width:W,height:H,windowWidth:W});
+      pgEl.remove();
+      if(i)pdf.addPage();pdf.addImage(cv.toDataURL("image/jpeg",.92),"JPEG",0,0,210,297);
+    }
+    host.remove();
+    pdf.save("Elagi-"+new Date().toISOString().slice(0,10)+".pdf");
+  }catch(e){console.error(e);document.querySelectorAll(".p2").forEach(x=>x.remove());toast(t("pdfErr"))}
+}
+window.__homePdf2=homePdf2;
+Object.assign(ACT,{homePdf(){homePdf2()}});
+}
+
 })();
 </script>
 <script>
@@ -1928,6 +2219,75 @@ function matchWords(words,fullText){
   return{name,generic:gen?gen[0].slice(2):"",strength:sm?sm[1].replace(",",".")+" "+sm[2].toLowerCase():"",alts:top.slice(0,4).map(r=>r[0].slice(2))};
 }
 
+
+/* ---- full product name: pick the best catalogue entry (brand + variant + strength) ---- */
+const PKS=/^(?:FC|SUGARC|ENTERIC|CHEW|EFF)?(?:TABS?|TABLETS?|CAPS?|CAPSULES?|CAPLETS?|SACHETS?|SUPP|AMPS?|AMPOULES?|VIALS?|PENS?|INF|IV|IM|IMIV|FOR|PD|POWDER|SUSP|SUSPENSION|ORAL|DROPS?|SYRUP|SYR|CREAM|GEL|OINT|OINTMENT|LOTION|SPRAY|SOL|SOLUTION|INJ|INJECTION|NEW|CANCELLED|FCTABS|FC|C|EFFERVESCENT|PACK|STRIPS?)$/;
+const UNITS=/^(?:MG|MCG|GM|G|ML|IU|MIU|%)$/;
+let FIRSTMAP=null;
+function firstMap(){
+  if(FIRSTMAP)return FIRSTMAP;FIRSTMAP=new Map();
+  for(let i=0;i<NU.length;i++){const w=(NU[i].match(/[A-Z][A-Z0-9]*/)||[""])[0];if(w.length>=3){let a=FIRSTMAP.get(w);if(!a)FIRSTMAP.set(w,a=[]);a.push(i)}}
+  return FIRSTMAP;
+}
+function nameToks(n){
+  const al=[],st=[],wk=[];let lastNum=-1;
+  for(let p of n.replace(/\([^)]*\)/g," ").split(/[\s,;]+/).filter(Boolean)){
+    p=p.replace(/\.+$/,"");if(!p)continue;
+    if(/\d/.test(p)){
+      const nums=p.match(/\d+(?:\.\d+)?/g)||[];
+      if(/MG|MCG|GM|ML|IU|%|\//.test(p)||/\dG$/.test(p)){st.push(...nums);lastNum=-1}else{lastNum=wk.length;wk.push(...nums)}
+      continue;
+    }
+    const u=p.replace(/[^A-Z0-9-]/g,"").replace(/\./g,"");if(!u)continue;
+    if(UNITS.test(u)){if(lastNum>=0&&lastNum<wk.length){st.push(wk.splice(lastNum,1)[0])}lastNum=-1;continue}
+    lastNum=-1;if(PKS.test(u))continue;al.push(u);
+  }
+  return{al,st,wk};
+}
+const normNum=x=>String(x).replace(",",".").replace(/^0+(?=\d)/,"");
+function ocrSets(words,text){
+  const oa=new Set(),on=new Set();
+  const raw=words.map(w=>String(w.text||"").toUpperCase().replace(/[^A-Z0-9]/g,"")).filter(Boolean);
+  for(const r of raw){if(/^[A-Z]+$/.test(r))oa.add(r);const c=cleanWord(r);if(c)oa.add(c)}
+  for(let i=0;i+1<raw.length;i++)if(/^[A-Z]+$/.test(raw[i])&&/^[A-Z]+$/.test(raw[i+1])&&raw[i].length+raw[i+1].length>=6)oa.add(raw[i]+raw[i+1]);
+  for(const m of String(text||"").replace(/,/g,".").matchAll(/\d+(?:\.\d+)?/g))on.add(normNum(m[0]));
+  for(const r of raw)if(/^\d+$/.test(r))on.add(normNum(r));
+  const onu=new Set();
+  for(const m of String(text||"").replace(/,/g,".").matchAll(/((?:\d+(?:\.\d+)?\s*[\/+]\s*)*\d+(?:\.\d+)?)\s*(?:mg|mcg|µg|ug|gm|g|ml|iu|%)/gi))for(const n of m[1].match(/\d+(?:\.\d+)?/g)||[])onu.add(normNum(n));
+  return{oa,on,onu};
+}
+function fuzzyHas(set,t){if(set.has(t))return true;if(t.length<5)return false;for(const w of set){if(Math.abs(w.length-t.length)<=1&&lev(w,t,1)<=1)return true}return false}
+/* returns {idx,alts,name,strength,score} or null */
+function matchFull(words,text){
+  const ix=build(),fm=firstMap(),maxH=Math.max(1,...words.map(x=>x.h||0)),brands=new Map();
+  const add=(w,x)=>{if(w.length<3||STOP.has(w))return;
+    const conf=Math.max(.2,(x.conf==null?60:x.conf)/100),size=.4+.6*((x.h||maxH)/maxH),len=Math.min(1,w.length/7);
+    const n=nearest(w,ix.brand,ix.bB);if(!n)return;if(w.length<=4&&conf<.6)return;
+    const sc=(n.d===0?1:n.d===1?.6:.35)*conf*size*len;brands.set(n.w,Math.max(brands.get(n.w)||0,sc))};
+  const ws=words.map(x=>[cleanWord(x.text),x]);
+  for(const[w,x]of ws)if(w)add(w,x);
+  for(let i=0;i+1<ws.length;i++){const a=ws[i][0],b=ws[i+1][0];if(a&&b&&/^[A-Z]+$/.test(a)&&/^[A-Z]+$/.test(b)&&a.length+b.length>=6)add(a+b,{conf:Math.min(ws[i][1].conf??60,ws[i+1][1].conf??60),h:Math.max(ws[i][1].h||0,ws[i+1][1].h||0)})}
+  const top=[...brands.entries()].filter(r=>r[1]>=.12).sort((a,b)=>b[1]-a[1]).slice(0,3);
+  if(!top.length)return null;
+  const {oa,on,onu}=ocrSets(words,text),best=top[0][1],noNums=on.size===0,out=[];
+  for(const[bw,bs]of top)for(const i of fm.get(bw)||[]){
+    const c=nameToks(NU[i]);let s=4*(bs/best);
+    for(const t of c.al){
+      if(t===bw)continue;
+      if(t.length===1){s+=oa.has(t)?.5:-.5;continue}
+      s+=oa.has(t)?2.5:fuzzyHas(oa,t)?1.5:-3;
+    }
+    for(const n of c.st){const k=normNum(n);s+=onu.has(k)?2.5:on.has(k)?1:(noNums?-.3:-2.5)}
+    for(const n of c.wk)if(on.has(normNum(n)))s+=.3;
+    s-=NU[i].length*.01;
+    out.push([s,i]);
+  }
+  if(!out.length)return null;
+  out.sort((a,b)=>b[0]-a[0]);
+  const sm=String(text||"").match(/(\d+(?:[.,]\d+)?)\s*(mg|mcg|µg|ug|g|ml|iu)\b/i);
+  return{idx:out[0][1],alts:out.slice(1,6).map(x=>x[1]),name:top[0][0],strength:sm?sm[1].replace(",",".")+" "+sm[2].toLowerCase():"",score:out[0][0],bscore:best,low:!(best>=.7||out[0][0]>=4)};
+}
+
 /* ---- image preparation ---- */
 async function bitmapOf(file){
   try{return await createImageBitmap(file,{imageOrientation:"from-image"})}catch{}
@@ -1973,14 +2333,16 @@ async function ocrOnce(w,canvas){
   return{words:wordsOf(data),text:data.text||""};
 }
 async function localRecognize(file){
-  const w=await getWorker(),bmp=await bitmapOf(file);
+  const w=await getWorker(),bmp=await bitmapOf(file);let words=[],text="",best=null;
   for(const inv of [false,true]){
-    const r=await ocrOnce(w,canvasOf(bmp,inv));
-    const m=matchWords(r.words,r.text);if(m)return m;
+    const r=await ocrOnce(w,canvasOf(bmp,inv));words=words.concat(r.words);text+="\n"+r.text;
+    const f=matchFull(words,text);if(f&&(!best||f.score>best.score))best=f;
+    if(best&&!best.low&&best.score>=7)break; // confident enough: skip the second (inverted) pass
   }
-  return null;
+  if(best)return best;
+  return matchWords(words,text);
 }
-window.__ocr={matchWords,localRecognize,cleanWord};
+window.__ocr={matchWords,matchFull,localRecognize,cleanWord,nameToks};
 
 /* ---- replace the photo handler: Claude-viewer AI if present, otherwise on-device OCR ---- */
 applyPhoto=async function(file){
@@ -1992,16 +2354,82 @@ applyPhoto=async function(file){
     if(!r||!r.name){try{r=await localRecognize(file)}catch(e){r=null;offline=String(e&&e.message)==="offline"}}
     if(!E||E.id!==my)return;
     let hits=[];
-    if(r){for(const q of [((r.name||"")+" "+(r.strength||"")).trim(),r.name,r.generic]){if(q&&q.trim()){hits=searchDrugs(q);if(hits.length)break}}}
-    if(hits.length&&r&&r.name){const nm=String(r.name).toUpperCase(),num=((r.strength||"").match(/[\d.]+/)||[""])[0];
-      const pr=i=>{const n=NU[i];return num&&n.startsWith(nm+" "+num)?0:n.startsWith(nm+" ")||n===nm?1:2};
-      hits=hits.map((h,ix)=>[h,ix]).sort((a,b)=>pr(a[0])-pr(b[0])||a[1]-b[1]).map(x=>x[0])}
-    if(hits.length){E.matches=hits;pickDrug(hits[0]);E.q=r.name||"";E.recog="found"}
+    if(r&&r.idx!=null){hits=[r.idx].concat((r.alts||[]).filter(x=>x!==r.idx))}
+    else if(r){for(const q of [((r.name||"")+" "+(r.strength||"")).trim(),r.name,r.generic]){if(q&&q.trim()){hits=searchDrugs(q);if(hits.length)break}}}
+    if(r&&r.low&&hits.length){E.matches=hits;E.q=r.name||"";E.recog="miss"}
+    else if(hits.length){E.matches=hits;pickDrug(hits[0]);E.q=(r&&r.idx!=null)?NU[hits[0]]:(r.name||"");E.recog="found"}
     else{E.recog="miss";if(r&&r.name){E.q=r.name;E.matches=searchDrugs(r.name)}}
     renderEditor();
     if(offline)toast("قراءة الصورة تحتاج إنترنت أول مرة. اكتب اسم الدواء أو أعد المحاولة عند الاتصال.");
   }catch{toast("تعذّر قراءة الصورة، جرّب صورة أخرى")}
 };
+})();
+</script>
+<script>
+/* ===== Tests v2: add another measurement, add an earlier (past) measurement, add a reminder ===== */
+(()=>{
+const pad=n=>String(n).padStart(2,"0");
+const dts=ts=>{const d=new Date(ts);return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate())};
+const tms=ts=>{const d=new Date(ts);return pad(d.getHours())+":"+pad(d.getMinutes())};
+const dueNow=t=>!t.done&&t.at<=Date.now()+30*60e3;
+
+openResult=function(id,adv,mode){
+  const t=S.user.tests.find(x=>x.id===id);if(!t)return;R={id,adv:!!adv,mode:mode||""};
+  const f=t.kind==="bp"?`<div class="row2"><label class="field"><span>الانقباضي (العالي)</span><input class="inp ltr" style="width:100%" id="rV" type="number" inputmode="numeric" placeholder="120"></label><label class="field"><span>الانبساطي (الواطي)</span><input class="inp ltr" style="width:100%" id="rV2" type="number" inputmode="numeric" placeholder="80"></label></div><label class="field"><span>النبض (اختياري)</span><input class="inp ltr" style="width:100%" id="rP" type="number" inputmode="numeric"></label>`
+   :t.kind==="val"?`<label class="field"><span>النتيجة${t.unit?` (${esc(t.unit)})`:""}</span><input class="inp" style="width:100%" id="rV" autocomplete="off"></label>`:"";
+  const base=mode==="old"?Date.now()-864e5:Date.now();
+  const when=mode?`<div class="row2"><label class="field"><span>يوم القياس</span><input class="inp ltr" style="width:100%" id="rD" type="date" max="${dts(Date.now())}" value="${dts(base)}"></label><label class="field"><span>وقت القياس</span><input class="inp ltr" style="width:100%" id="rT" type="time" value="${tms(base)}"></label></div>`:"";
+  const ttl=mode==="old"?"إضافة قياس قديم":mode==="new"?"إضافة قياس آخر":"تسجيل النتيجة";
+  openSheet(`<div class="sheet-h"><h3>${ttl}</h3><button class="icon-btn" data-a="sheetClose" aria-label="إغلاق">${ic("x")}</button></div><p style="margin:0 0 14px;font-weight:600">${esc(t.ar)}</p>${when}${f}
+   <label class="field"><span>ملاحظة (اختياري)</span><input class="inp" style="width:100%" id="rN" autocomplete="off"></label><button class="btn primary" data-a="rSave">حفظ النتيجة</button>`);
+};
+
+saveResult=async function(){
+  const t=S.user.tests.find(x=>x.id===R.id);if(!t)return;const adv=R.adv,mode=R.mode;
+  const v=($("#rV")?.value||"").trim(),v2=($("#rV2")?.value||"").trim(),p=($("#rP")?.value||"").trim(),note=($("#rN")?.value||"").trim();
+  if(t.kind==="bp"&&(!v||!v2)){toast("اكتب القراءتين");return}
+  if(t.kind==="val"&&!v){toast("اكتب النتيجة");return}
+  let ts=Date.now();const d=$("#rD"),tm=$("#rT");
+  if(d){ts=new Date(d.value+"T"+((tm&&tm.value)||"12:00")).getTime();
+    if(!d.value||!isFinite(ts)){toast("اختر يوم القياس");return}
+    if(ts>Date.now()+60000){toast("لا يمكن اختيار وقت في المستقبل");return}}
+  t.results=(t.results||[]).concat([{ts,v,v2,p,note}]).sort((a,b)=>a.ts-b.ts).slice(-60);
+  // an extra/older reading must never touch the reminder; only a reading answering a due reminder moves it on
+  if(adv||(!mode&&t.repeat==="none"))advanceTest(t);
+  await persist();closeSheet();render();toast("تم حفظ النتيجة");
+};
+
+openTestDetail=function(id){
+  const t=S.user.tests.find(x=>x.id===id);if(!t)return;
+  const loc=window.ELANG==="en"?"en-US":"ar-EG-u-nu-latn";
+  const rs=(t.results||[]).slice().sort((a,b)=>b.ts-a.ts).slice(0,20);
+  const has=!t.done&&t.at>Date.now()-60000;
+  openSheet(`<div class="sheet-h"><h3>${esc(t.ar)}</h3><button class="icon-btn" data-a="sheetClose" aria-label="إغلاق">${ic("x")}</button></div>
+   ${t.en?`<p class="hint ltr" style="margin:-6px 0 10px">${esc(t.en)}</p>`:""}
+   <div class="card" style="margin-bottom:14px"><div class="kv"><span>التنبيه</span><b>${t.done||!has&&t.repeat==="none"?"لا يوجد":fmtDate(t.at)+" • "+fmtTime(t.at)}</b></div><div class="kv"><span>التكرار</span><b>${REP[t.repeat]}</b></div></div>
+   <div class="sec"><h3>القياسات السابقة</h3></div>
+   ${rs.length?`<div class="card" style="margin-bottom:14px">${rs.map(r=>`<div class="kv" style="align-items:center"><span style="line-height:1.35">${new Date(r.ts).toLocaleDateString(loc,{day:"numeric",month:"short",year:"numeric"})}<small style="display:block;color:var(--ink-2);font-size:12.5px">${new Date(r.ts).toLocaleTimeString(loc,{hour:"numeric",minute:"2-digit"})}</small></span><span style="display:inline-flex;align-items:center;gap:4px"><b class="ltr" style="font-size:14.5px;text-align:end">${esc(resTxt(t,r))}</b><button class="icon-btn sm" data-a="rDel" data-id="${esc(t.id)}" data-ts="${r.ts}" aria-label="حذف">${ic("trash",18)}</button></span></div>`).join("")}</div>`:`<p class="hint" style="margin-bottom:14px">لا توجد قياسات مسجّلة بعد.</p>`}
+   <div style="display:grid;gap:8px"><button class="btn primary" data-a="tNew" data-id="${esc(t.id)}">${ic("plus",20)} إضافة قياس آخر</button>
+   <div class="row2"><button class="btn ghost" style="font-size:15px;padding:0 8px" data-a="tOld" data-id="${esc(t.id)}">إضافة قياس قديم</button><button class="btn ghost" style="font-size:15px;padding:0 8px" data-a="tAlert" data-id="${esc(t.id)}">${ic("bell",20)} ${has?"تعديل التنبيه":"إضافة تنبيه"}</button></div>
+   <button class="btn danger" data-a="tDel" data-id="${esc(t.id)}">حذف التحليل</button></div>`);
+};
+
+Object.assign(ACT,{
+  tRecord(el){const t=S.user.tests.find(x=>x.id===el.dataset.id);if(t)openResult(t.id,dueNow(t),"new")},
+  tNew(el){const t=S.user.tests.find(x=>x.id===el.dataset.id);if(t)openResult(t.id,dueNow(t),"new")},
+  tOld(el){openResult(el.dataset.id,false,"old")},
+  tAlert(el){
+    const t=S.user.tests.find(x=>x.id===el.dataset.id);if(!t)return;
+    let d;if(!t.done&&t.at>Date.now())d=new Date(t.at);else{d=new Date(Date.now()+864e5);d.setHours(9,0,0,0)}
+    TE={editing:true,alert:true,id:t.id,item:{en:t.en,ar:t.ar,unit:t.unit,kind:t.kind},q:"",matches:[],date:dstr(d),time:hhmm(d),repeat:t.done?"none":(t.repeat||"none")};
+    renderTE();
+  },
+  async rDel(el){
+    const t=S.user.tests.find(x=>x.id===el.dataset.id);if(!t)return;const ts=+el.dataset.ts;
+    const i=(t.results||[]).findIndex(r=>r.ts===ts);if(i<0)return;t.results.splice(i,1);
+    await persist();openTestDetail(t.id);render();toast("تم الحذف");
+  }
+});
 })();
 </script>
 <script>
