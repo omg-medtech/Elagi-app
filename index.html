@@ -1373,7 +1373,14 @@ setTimeout(()=>{if(__skipRender){__skipRender=false;if(!S.user)render()}},7000);
 (()=>{
 const LOWQ=5;
 const TX={
-ar:{addQty:"إضافة كمية",qNow:"المتبقي حاليًا",qAdd:"الكمية المضافة",qSet:"الكمية الصحيحة",qNew:"الإجمالي الجديد",qModeAdd:"إضافة كمية",qModeEdit:"تعديل الكمية",qSave:"حفظ",qSaved:"تم تحديث الكمية",qBad:"أدخل رقمًا صحيحًا",qUnit:"وحدة",title:"قياسات الجسم",open:"قياسات الجسم ومساحة السطح",sub:"BMI، مساحة السطح، توزيع الدهون",btn:"فتح",lang:"لغة التطبيق",sex:"النوع",m:"ذكر",f:"أنثى",
+ar:{chest:"محيط الصدر (سم)",how_chest:"قِس عند أعرض نقطة حول الصدر (مستوى الحلمتين)، والشريط أفقي ومريح، بعد الزفير.",goal:"وزن الهدف (كجم)",goalH:"حدّد هدفك لنتابع تقدّمك (تخسيس أو زيادة أو ثبات).",
+how_waist_m:"عند مستوى السرّة، بعد الزفير مع إرخاء البطن.",how_waist_f:"عند أضيق نقطة فوق السرّة، بعد الزفير مع إرخاء البطن.",hipOpt:"محيط الورك (اختياري)",
+sexAsk:"اختر النوع لتظهر لك القياسات المناسبة",sexAskH:"المقاييس والصور تختلف بين الذكر والأنثى.",chSex:"تغيير النوع",
+trackT:"متابعة الوزن",startW:"وزن البداية",curW:"الوزن الحالي",lostT:"نزل",gainT:"زاد",remain:"المتبقي للهدف",prog:"التقدّم نحو الهدف",perWk:"المعدل الأسبوعي",wk:"كجم/أسبوع",
+dLoss:"هدفك تخسيس",dGain:"هدفك زيادة وزن",dKeep:"هدفك الثبات",noGoal:"اكتب وزن الهدف لتظهر المتابعة.",noHist:"احفظ أول قياس ليبدأ التتبع.",reached:"وصلت إلى هدفك!",
+range:"الوزن الصحي لطولك",fastW:"المعدل أسرع من الموصى به (حوالي نصف إلى كيلو أسبوعيًا). استشر طبيبك.",goalOut:"هدفك خارج النطاق الصحي لطولك، استشر طبيبك.",
+chg:"التغيّر منذ البداية",dateT:"التاريخ",timeT:"الوقت",future:"لا يمكن تسجيل قياس في المستقبل.",log:"سجل القياسات",del:"حذف القياس",delQ:"هل تريد حذف هذا القياس من السجل؟",cancel2:"إلغاء",yes:"حذف",
+mt:"وقت القياس",wtL:"الوزن",wsL:"الخصر",chL:"الصدر",hpL:"الورك",nkL:"الرقبة",addQty:"إضافة كمية",qNow:"المتبقي حاليًا",qAdd:"الكمية المضافة",qSet:"الكمية الصحيحة",qNew:"الإجمالي الجديد",qModeAdd:"إضافة كمية",qModeEdit:"تعديل الكمية",qSave:"حفظ",qSaved:"تم تحديث الكمية",qBad:"أدخل رقمًا صحيحًا",qUnit:"وحدة",title:"قياسات الجسم",open:"قياسات الجسم ومساحة السطح",sub:"BMI، مساحة السطح، توزيع الدهون",btn:"فتح",lang:"لغة التطبيق",sex:"النوع",m:"ذكر",f:"أنثى",
 h:"الطول (سم)",w:"الوزن (كجم)",neck:"محيط الرقبة (سم)",waist:"محيط الخصر (سم)",hip:"محيط الورك (سم)",
 how_h:"قف مستقيمًا حافي القدمين وظهرك للحائط، وقِس من الأرض حتى أعلى الرأس.",
 how_w:"الأفضل صباحًا بعد دخول الحمام وقبل الأكل، بملابس خفيفة.",
@@ -1390,7 +1397,14 @@ treat:"المرض والأدوية والجرعات والمواعيد",disease:
 doseOf:"الجرعة",times:"المواعيد",perDay:n=>n===1?"مرة يوميًا":n===2?"مرتان يوميًا":n+" مرات يوميًا",
 testsT:"التحاليل التي أجريتها",noTests:"لا توجد تحاليل مسجلة بعد.",all:"عرض الكل",measT:"مؤشر كتلة الجسم وقياسات الجسم ومساحة السطح",
 noMeas:"أضف طولك ووزنك لحساب مؤشر كتلة الجسم ومساحة السطح وتوزيع الدهون.",openMeas:"فتح قياسات الجسم",refill:"جدّد الدواء قريبًا.",pdf:"تنزيل كملف PDF",pdfWait:"جارٍ تجهيز الملف…",pdfErr:"تعذّر إنشاء الملف — تحقق من الاتصال بالإنترنت",pdfTitle:"الملخص الصحي",pdfApp:"حمّل تطبيق عِلاجي",pdfScan:"امسح الرمز أو افتح الرابط",apple:"تفاحي",pear:"كمثري",bioT:"القفل بالبصمة",bioSub:"اطلب البصمة أو قفل الشاشة عند فتح التطبيق",bioOn:"تفعيل",bioOff:"إيقاف",bioUnlock:"افتح بالبصمة",bioHint:"أكّد هويتك لفتح عِلاجي",bioEnabled:"تم تفعيل القفل بالبصمة",bioDisabled:"تم إيقاف القفل",bioNo:"جهازك أو متصفحك لا يدعم البصمة هنا",bioFail:"لم يتم التحقق. حاول مرة أخرى.",pushT:"إشعارات عند إغلاق التطبيق",pushSub:"تصلك تذكيرات الجرعات والتحاليل حتى والتطبيق مغلق",pushOn:"تفعيل",pushOff:"إيقاف",pushOk:"تم تفعيل الإشعارات على هذا الجهاز",pushDenied:"تم رفض إذن الإشعارات. فعّله من إعدادات المتصفح.",pushNo:"هذا الجهاز لا يدعم الإشعارات. على آيفون ثبّت التطبيق على الشاشة الرئيسية أولًا.",pushErr:"تعذّر تفعيل الإشعارات",pushStopped:"تم إيقاف الإشعارات",cam:"كاميرا",gal:"من الصور",clearAll:"حذف كل الأمراض والأدوية",clearQ:"سيتم حذف جميع الأمراض وأدويتها نهائيًا ولا يمكن التراجع.",clearYes:"نعم، احذف الكل",cleared:"تم الحذف",dzSel:"المرض",noDz:"بدون مرض",myMeds:"أدويتي",addDz:"إضافة مرض",dzName:"اسم المرض",dzPh:"مثال: السكري، الضغط",dzSave:"حفظ المرض",dzNone:"أدوية بدون مرض محدد",dzEmpty:"لم تُضف أدوية لهذا المرض بعد.",dzDel:"حذف المرض",dzDelQ:"حذف هذا المرض؟ ستبقى أدويته ضمن «أدوية بدون مرض محدد».",cancel:"إلغاء",remain:"المتبقي",lasts:"يكفي ~",dayW:"يوم",edit:"تعديل",del:"حذف",dzStart:"ابدأ بإضافة مرض، ثم أضف الأدوية التي تعالجه دواءً دواءً."},
-en:{addQty:"Add stock",qNow:"Currently left",qAdd:"Amount to add",qSet:"Correct amount",qNew:"New total",qModeAdd:"Add stock",qModeEdit:"Edit amount",qSave:"Save",qSaved:"Quantity updated",qBad:"Enter a valid number",qUnit:"units",title:"Body measurements",open:"Body measurements & surface area",sub:"BMI, surface area, fat distribution",btn:"Open",lang:"App language",sex:"Sex",m:"Male",f:"Female",
+en:{chest:"Chest circumference (cm)",how_chest:"Measure at the fullest part of the chest (nipple level), tape level and snug, after breathing out.",goal:"Goal weight (kg)",goalH:"Set a goal so we can track your progress (lose, gain or maintain).",
+how_waist_m:"At navel level, after breathing out with the belly relaxed.",how_waist_f:"At the narrowest point above the navel, after breathing out with the belly relaxed.",hipOpt:"Hip circumference (optional)",
+sexAsk:"Choose your sex to see the right measurements",sexAskH:"Measurements and illustrations differ for men and women.",chSex:"Change sex",
+trackT:"Weight tracking",startW:"Starting weight",curW:"Current weight",lostT:"Lost",gainT:"Gained",remain:"Left to goal",prog:"Progress to goal",perWk:"Weekly rate",wk:"kg/week",
+dLoss:"Your goal: lose weight",dGain:"Your goal: gain weight",dKeep:"Your goal: maintain",noGoal:"Enter a goal weight to see tracking.",noHist:"Save your first measurement to start tracking.",reached:"You reached your goal!",
+range:"Healthy weight for your height",fastW:"This pace is faster than recommended (about 0.5–1 kg per week). Ask your doctor.",goalOut:"Your goal is outside the healthy range for your height. Ask your doctor.",
+chg:"Change since start",dateT:"Date",timeT:"Time",future:"You can't log a measurement in the future.",log:"Measurement log",del:"Delete entry",delQ:"Delete this entry from the log?",cancel2:"Cancel",yes:"Delete",
+mt:"Measured at",wtL:"Weight",wsL:"Waist",chL:"Chest",hpL:"Hip",nkL:"Neck",addQty:"Add stock",qNow:"Currently left",qAdd:"Amount to add",qSet:"Correct amount",qNew:"New total",qModeAdd:"Add stock",qModeEdit:"Edit amount",qSave:"Save",qSaved:"Quantity updated",qBad:"Enter a valid number",qUnit:"units",title:"Body measurements",open:"Body measurements & surface area",sub:"BMI, surface area, fat distribution",btn:"Open",lang:"App language",sex:"Sex",m:"Male",f:"Female",
 h:"Height (cm)",w:"Weight (kg)",neck:"Neck circumference (cm)",waist:"Waist circumference (cm)",hip:"Hip circumference (cm)",
 how_h:"Stand straight and barefoot with your back to a wall. Measure from the floor to the top of the head.",
 how_w:"Best in the morning after using the toilet and before eating, in light clothing.",
@@ -1407,14 +1421,22 @@ treat:"Condition, medicines, doses & times",disease:"Condition",noMeds:"No medic
 doseOf:"Dose",times:"Times",perDay:n=>n+"× daily",
 testsT:"Tests you've done",noTests:"No test results yet.",all:"View all",measT:"BMI, body measurements & surface area",
 noMeas:"Add your height and weight to calculate BMI, surface area and fat distribution.",openMeas:"Open body measurements",refill:"Refill soon.",pdf:"Download PDF",pdfWait:"Preparing the file…",pdfErr:"Couldn't create the file — check your connection",pdfTitle:"Health summary",pdfApp:"Get the Elagi app",pdfScan:"Scan the code or open the link",apple:"Apple",pear:"Pear",bioT:"Fingerprint lock",bioSub:"Ask for fingerprint or screen lock when opening the app",bioOn:"Enable",bioOff:"Turn off",bioUnlock:"Unlock with fingerprint",bioHint:"Confirm it's you to open Elagi",bioEnabled:"Fingerprint lock enabled",bioDisabled:"Lock turned off",bioNo:"Your device or browser doesn't support this here",bioFail:"Couldn't verify. Try again.",pushT:"Notifications when the app is closed",pushSub:"Get dose and test reminders even when the app is closed",pushOn:"Enable",pushOff:"Turn off",pushOk:"Notifications enabled on this device",pushDenied:"Notification permission denied. Enable it in browser settings.",pushNo:"This device doesn't support notifications. On iPhone, add the app to the Home Screen first.",pushErr:"Couldn't enable notifications",pushStopped:"Notifications turned off",cam:"Camera",gal:"From photos",clearAll:"Delete all conditions & medicines",clearQ:"All conditions and their medicines will be permanently deleted. This can't be undone.",clearYes:"Yes, delete all",cleared:"Deleted",dzSel:"Condition",noDz:"No condition",myMeds:"My medicines",addDz:"Add condition",dzName:"Condition name",dzPh:"e.g. Diabetes, Hypertension",dzSave:"Save condition",dzNone:"Medicines without a condition",dzEmpty:"No medicines added for this condition yet.",dzDel:"Delete condition",dzDelQ:"Delete this condition? Its medicines will be kept under \"Medicines without a condition\".",cancel:"Cancel",remain:"Remaining",lasts:"lasts ~",dayW:"days",edit:"Edit",del:"Delete",dzStart:"Start by adding a condition, then add the medicines that treat it, one by one."}};
-const K=["h","w","neck","waist","hip"];
+const K=["h","w","neck","waist","hip","chest","goal"];
+const KS={m:["h","w","neck","waist","hip"],f:["h","w","neck","waist","hip","chest"]};
+const sexOf=u=>{const b=u.body||{};return b.sex||(u.gender==="ذكر"?"m":u.gender==="أنثى"?"f":"")};
 let LANG="ar";try{LANG=localStorage.getItem("elagi.lang")==="en"?"en":"ar"}catch{}window.ELANG=LANG;
 const lg=()=>LANG,t=k=>TX[lg()][k],dir=()=>LANG==="en"?"ltr":"rtl";
 const num=v=>{v=parseFloat(String(v).replace(/[\u0660-\u0669]/g,c=>c.charCodeAt(0)-1632).replace(",","."));return isFinite(v)&&v>0?v:0};
 const lab=`display:block;font-weight:600;font-size:14.5px;margin-bottom:6px`;
 
-function fig(k){
+function fig(k,sex){
   const on=x=>x===k?'stroke="#EE7666" stroke-width="3.5"':'stroke="currentColor" stroke-opacity=".3" stroke-width="1.5"';
+  if(sex==="f")return `<svg viewBox="0 0 120 200" width="84" height="140" aria-hidden="true" style="color:var(--ink-2);flex:none">
+<path d="M44 16Q44 0 60 0Q76 0 76 16L80 46Q60 38 40 46Z" fill="var(--teal-d)" opacity=".28"/>
+<g fill="var(--mint)" stroke="var(--teal-d)" stroke-width="2" stroke-linejoin="round"><circle cx="60" cy="21" r="13"/><path d="M55 33h10v9H55z"/><path d="M40 46Q60 40 80 46L84 64Q84 76 74 86L74 94Q72 106 87 124L85 130H35L33 124Q48 106 46 94L46 86Q36 76 36 64Z"/><path d="M38 130H58L55 190H44ZM62 130H82L76 190H65Z"/></g>
+<path d="M40 48 29 100M80 48 91 100" fill="none" stroke="var(--teal-d)" stroke-width="3" stroke-linecap="round"/>
+<g fill="none" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="60" cy="42" rx="10" ry="3.2" ${on("neck")}/><path d="M37 66Q60 77 83 66" ${on("chest")}/><path d="M46 92Q60 99 74 92" ${on("waist")}/><path d="M34 126Q60 137 86 126" ${on("hip")}/>
+<path d="M108 6V190M102 13l6-7 6 7M102 183l6 7 6-7" ${on("h")}/><path d="M26 194H94" ${on("w")}/></g></svg>`;
   return `<svg viewBox="0 0 120 200" width="84" height="140" aria-hidden="true" style="color:var(--ink-2);flex:none">
 <g fill="var(--mint)" stroke="var(--teal-d)" stroke-width="2" stroke-linejoin="round"><circle cx="60" cy="20" r="14"/><path d="M53 33h14v10H53z"/><path d="M34 46Q60 40 86 46L80 90 84 118H36L40 90Z"/><path d="M36 118H58L54 190H42ZM62 118H84L78 190H66Z"/></g>
 <path d="M34 48 22 100M86 48 98 100" fill="none" stroke="var(--teal-d)" stroke-width="3" stroke-linecap="round"/>
@@ -1445,21 +1467,61 @@ function resHtml(b){
   else if(!b.sex)h+=`<p class="hint" style="margin:6px 0 0">${t("needSex")}</p>`;
   return h;
 }
-function spark(v){
-  if(v.length<2)return"";const mn=Math.min(...v),d=(Math.max(...v)-mn)||1;
-  const p=v.map((y,i)=>`${(5+i*220/(v.length-1)).toFixed(1)},${(45-(y-mn)/d*38).toFixed(1)}`).join(" ");
-  return `<svg viewBox="0 0 230 50" width="100%" height="50" aria-hidden="true"><polyline points="${p}" fill="none" stroke="var(--teal)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/></svg>`;
+const dFmt=ts=>new Date(ts).toLocaleDateString(t("loc"),{day:"numeric",month:"short",year:"numeric"}),tFmt=ts=>new Date(ts).toLocaleTimeString(t("loc"),{hour:"numeric",minute:"2-digit"});
+const sorted=b=>(b.hist||[]).slice().sort((x,y)=>x.at-y.at);
+function chart(H,goal){
+  if(!H.length)return"";
+  const W=300,Ht=130,pl=36,pr=10,pt=12,pb=24,ws=H.map(e=>e.w);
+  let lo=Math.min(...ws,goal||1e9),hi=Math.max(...ws,goal||0);if(hi-lo<2){lo-=1;hi+=1}const pad=(hi-lo)*.12;lo-=pad;hi+=pad;
+  const t0=H[0].at,t1=H[H.length-1].at,x=ts=>t1===t0?W/2:pl+(ts-t0)/(t1-t0)*(W-pl-pr),y=v=>pt+(hi-v)/(hi-lo)*(Ht-pt-pb);
+  const pts=H.map(e=>`${x(e.at).toFixed(1)},${y(e.w).toFixed(1)}`).join(" ");
+  const dots=H.map(e=>`<circle cx="${x(e.at).toFixed(1)}" cy="${y(e.w).toFixed(1)}" r="3.5" fill="var(--teal)" stroke="var(--card)" stroke-width="1.5"/>`).join("");
+  const gl=goal?`<line x1="${pl}" x2="${W-pr}" y1="${y(goal).toFixed(1)}" y2="${y(goal).toFixed(1)}" stroke="var(--coral)" stroke-width="1.5" stroke-dasharray="5 4"/><text x="${W-pr}" y="${(y(goal)-4).toFixed(1)}" text-anchor="end" font-size="10" fill="var(--coral-d,#C4503F)">${goal}</text>`:"";
+  const sd=ts=>new Date(ts).toLocaleDateString(t("loc"),{day:"numeric",month:"short"});
+  return `<svg viewBox="0 0 ${W} ${Ht}" width="100%" height="${Ht}" aria-hidden="true" style="direction:ltr;display:block">
+<text x="${pl-4}" y="${y(Math.max(...ws)).toFixed(1)}" text-anchor="end" font-size="10" fill="var(--ink-2)" dominant-baseline="middle">${Math.max(...ws)}</text><text x="${pl-4}" y="${y(Math.min(...ws)).toFixed(1)}" text-anchor="end" font-size="10" fill="var(--ink-2)" dominant-baseline="middle">${Math.min(...ws)}</text>
+${gl}<polyline points="${pts}" fill="none" stroke="var(--teal)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>${dots}
+<text x="${pl}" y="${Ht-6}" font-size="10" fill="var(--ink-2)">${sd(t0)}</text>${H.length>1?`<text x="${W-pr}" y="${Ht-6}" text-anchor="end" font-size="10" fill="var(--ink-2)">${sd(t1)}</text>`:""}</svg>`;
+}
+const dl=(v,u,good)=>{if(v==null||!isFinite(v))return"";const a=Math.abs(v),str=(v>0?"+":v<0?"−":"")+(Math.round(a*10)/10),c=v===0?"var(--ink-2)":good===true?"var(--teal-d)":good===false?"var(--coral-d,#C4503F)":"var(--ink-2)";return `<span class="ltr" style="color:${c};font-weight:700">${str}${u?" "+u:""}</span>`};
+function trackHtml(b){
+  const H=sorted(b);
+  if(!H.length)return `<p class="hint" style="margin:0">${t("noHist")}</p>`;
+  const goal=num(b.goal),st=H[0],cur=H[H.length-1],h=cur.h||b.h,diff=cur.w-st.w;
+  let o=`<div class="kv"><span>${t("startW")}</span><b><span class="ltr">${st.w} ${t("kg")}</span></b></div><div class="kv"><span>${t("curW")}</span><b><span class="ltr">${cur.w} ${t("kg")}</span></b></div>`;
+  const dir=!goal?"":goal<st.w-.5?"loss":goal>st.w+.5?"gain":"keep";
+  if(H.length>1)o+=`<div class="kv"><span>${diff<0?t("lostT"):t("gainT")}</span><b><span class="ltr">${f1(Math.abs(diff))} ${t("kg")}</span></b></div>`;
+  if(!goal){o+=`<p class="hint" style="margin:6px 0 0">${t("noGoal")}</p>`;}
+  else{
+    const tot=st.w-goal,done=st.w-cur.w;let pct=dir==="keep"?(Math.abs(cur.w-goal)<=.5?100:Math.max(0,100-Math.abs(cur.w-goal)*20)):Math.max(0,Math.min(100,done/tot*100));
+    const left=dir==="keep"?Math.abs(cur.w-goal):Math.max(0,dir==="loss"?cur.w-goal:goal-cur.w),reached=dir==="keep"?left<=.5:(dir==="loss"?cur.w<=goal:cur.w>=goal);
+    o+=`<div class="kv"><span>${t(dir==="loss"?"dLoss":dir==="gain"?"dGain":"dKeep")}</span><b><span class="ltr">${goal} ${t("kg")}</span></b></div>
+<div style="margin:8px 0 4px;height:12px;border-radius:99px;background:var(--line);overflow:hidden" role="progressbar" aria-valuenow="${Math.round(pct)}" aria-valuemin="0" aria-valuemax="100"><div style="height:100%;width:${pct.toFixed(0)}%;background:linear-gradient(90deg,var(--teal),var(--teal-d));border-radius:99px"></div></div>
+<div class="kv"><span>${t("prog")}</span><b><span class="ltr">${Math.round(pct)}%</span></b></div>${reached?`<p style="margin:6px 0 0;color:var(--teal-d);font-weight:700">🎉 ${t("reached")}</p>`:`<div class="kv"><span>${t("remain")}</span><b><span class="ltr">${f1(left)} ${t("kg")}</span></b></div>`}`;
+    const days=(cur.at-st.at)/864e5;
+    if(H.length>1&&days>=3){const wk=diff/(days/7);o+=`<div class="kv"><span>${t("perWk")}</span><b>${dl(wk,t("wk"),dir==="loss"?wk<0:dir==="gain"?wk>0:null)}</b></div>`;if(Math.abs(wk)>1.1&&dir!=="keep")o+=`<p class="hint" style="margin:4px 0 0;color:var(--coral-d,#C4503F)">${t("fastW")}</p>`}
+    if(h){const lo=18.5*(h/100)**2,hi=24.9*(h/100)**2;o+=`<small class="hint" style="display:block;margin-top:6px">${t("range")}: <span class="ltr">${f1(lo)} – ${f1(hi)} ${t("kg")}</span></small>`;if(goal<lo-.5||goal>hi+.5)o+=`<p class="hint" style="margin:4px 0 0">${t("goalOut")}</p>`}
+  }
+  if(H.length>1){
+    const ks=[["w","wtL"],["waist","wsL"],["chest","chL"],["hip","hpL"],["neck","nkL"]],lines=ks.filter(([k])=>st[k]&&cur[k]).map(([k,l])=>`<div class="kv"><span>${t(l)}</span><b>${dl(cur[k]-st[k],k==="w"?t("kg"):t("cm"),(dir==="gain"&&k==="w")?cur[k]>st[k]:cur[k]<st[k])}</b></div>`).join("");
+    if(lines)o+=`<div style="margin-top:10px"><b style="font-size:14px">${t("chg")}</b>${lines}</div>`;
+  }
+  return o+`<div style="margin-top:12px">${chart(H,goal)}</div>`;
 }
 function histHtml(b){
-  const H=(b.hist||[]);if(!H.length)return"";
-  const rows=H.slice(-5).reverse().map(e=>`<div class="kv"><span>${new Date(e.at).toLocaleDateString(t("loc"))}</span><b><span class="ltr">${e.w} ${t("kg")} · BMI ${e.bmi}${e.bf!=null?` · ${e.bf}%`:""}</span></b></div>`).join("");
-  return `<div class="card" style="margin-top:14px"><b>${t("hist")}</b>${H.length>1?`<small class="hint" style="display:block;margin-top:6px">${t("wt")}</small>${spark(H.map(e=>e.w))}`:""}${rows}</div>`;
+  const H=sorted(b);if(!H.length)return"";
+  const goal=num(b.goal),dir=!goal?"":goal<H[0].w-.5?"loss":goal>H[0].w+.5?"gain":"keep";
+  const rows=H.slice().reverse().slice(0,40).map((e,i,arr)=>{
+    const prev=H[H.length-1-i-1],d=prev?e.w-prev.w:null,good=d==null?null:dir==="gain"?d>0:dir==="loss"?d<0:null;
+    const extra=[e.waist?`${t("wsL")} ${e.waist}`:"",e.chest?`${t("chL")} ${e.chest}`:"",e.hip?`${t("hpL")} ${e.hip}`:""].filter(Boolean).join(" · ");
+    return `<div class="kv" style="align-items:center;gap:8px"><span style="line-height:1.35">${dFmt(e.at)}<small style="display:block;color:var(--ink-2);font-size:12.5px">${tFmt(e.at)}</small></span><span style="flex:1;min-width:0;text-align:end"><b class="ltr">${e.w} ${t("kg")} · BMI ${e.bmi}${e.bf!=null?` · ${e.bf}%`:""}</b>${d!=null?`<small style="display:block">${dl(d,t("kg"),good)}</small>`:""}${extra?`<small class="ltr" style="display:block;color:var(--ink-2)">${extra}</small>`:""}</span><button class="icon-btn" data-a="bmDel" data-at="${e.at}" aria-label="${t("del")}" style="flex:none">${ic("x",18)}</button></div>`}).join("");
+  return `<div class="card" style="margin-top:14px"><b>${t("log")}</b>${rows}</div>`;
 }
 const langBar=()=>`<div class="field"><span style="${lab}">${t("lang")}</span><div class="chips">${[["ar","العربية"],["en","English"]].map(([k,l])=>`<button class="chip" aria-pressed="${lg()===k}" data-a="bmLang" data-v="${k}">${l}</button>`).join("")}</div></div>`;
-const fld=k=>`<div class="field"><div style="display:flex;gap:12px;align-items:center">${fig(k)}<div style="flex:1;min-width:0"><span style="${lab}">${t(k)}</span><input class="inp ltr" id="bm_${k}" inputmode="decimal" autocomplete="off" style="width:100%" value="${S.user.body[k]||""}"><small class="hint" style="display:block;margin-top:6px">${t("how_"+k)}</small></div></div></div>`;
+const fld=(k,sex)=>{const how=t(k==="waist"?"how_waist_"+sex:"how_"+k),lbl=k==="hip"&&sex==="m"?t("hipOpt"):t(k);return `<div class="field"><div style="display:flex;gap:12px;align-items:center">${fig(k,sex)}<div style="flex:1;min-width:0"><span style="${lab}">${lbl}</span><input class="inp ltr" id="bm_${k}" inputmode="decimal" autocomplete="off" style="width:100%" value="${S.user.body[k]||""}"><small class="hint" style="display:block;margin-top:6px">${how}</small></div></div></div>`};
 
 function bmRead(){const b=S.user.body=S.user.body||{};for(const k of K){const e=document.getElementById("bm_"+k);if(e)b[k]=num(e.value)}return b}
-function bmUpdate(){const b=bmRead(),r=document.getElementById("bmRes");if(r)r.innerHTML=resHtml(b);const h=document.getElementById("bmHist");if(h)h.innerHTML=histHtml(b)}
+function bmUpdate(){const b=bmRead(),r=document.getElementById("bmRes");if(r)r.innerHTML=resHtml(b);const h=document.getElementById("bmHist");if(h)h.innerHTML=histHtml(b);const tr=document.getElementById("bmTrack");if(tr)tr.innerHTML=trackHtml(b)}
 function resCompact(b){
   const r=calc(b),d="—",m=b.sex==="m",row=(l,v)=>`<div class="kv"><span>${l}</span><b>${v}</b></div>`,L=x=>`<span class="ltr">${x}</span>`;
   const bi=r?(r.bmi<18.5?0:r.bmi<25?1:r.bmi<30?2:3):0;
@@ -1468,16 +1530,26 @@ function resCompact(b){
   h+=row(t("bmi"),`${L(f1(r.bmi))} — ${t("bmiN")[bi]}`)+row(t("bsa"),`${L(f1(r.bsaM,2))} m²`);
   if(r.whr!=null)h+=row(t("whr"),`${L(f1(r.whr,2))}${b.sex?` — ${r.whr>=(m?.9:.85)?t("apple"):t("pear")}`:""}`);
   if(r.whtr!=null)h+=row(t("whtr"),L(f1(r.whtr,2)));
+  if(b.chest&&b.sex==="f")h+=row(t("chL"),`${L(b.chest)} ${t("cm")}`);
   if(r.bf!=null)h+=row(t("bf"),`${L(f1(r.bf))}%`)+row(t("fm"),`${L(f1(r.fm))} ${t("kg")}`)+row(t("lm"),`${L(f1(r.lm))} ${t("kg")}`);
+  const g=num(b.goal);if(g&&b.w)h+=row(t("goal").replace(/\s*\(.*\)/,""),`${L(g)} ${t("kg")} — ${L(f1(Math.abs(b.w-g)))} ${t("kg")}`);
   return h;
 }
 function bmPage(){
-  const u=S.user,b=u.body=u.body||{};
-  if(!b.sex)b.sex=u.gender==="ذكر"?"m":u.gender==="أنثى"?"f":"";
-  return `<div class="bm" dir="${dir()}"><div class="sec"><h3>${t("title")}</h3></div>
-<div class="field"><span style="${lab}">${t("sex")}</span><div class="chips">${["m","f"].map(x=>`<button class="chip" aria-pressed="${b.sex===x}" data-a="bmSex" data-v="${x}">${t(x)}</button>`).join("")}</div></div>
-${K.map(fld).join("")}<div class="card" style="margin:6px 0 12px"><b>${t("res")}</b><div id="bmRes" style="margin-top:8px">${resHtml(b)}</div></div>
-<button class="btn primary" data-a="bmSave">${t("save")}</button><div id="bmHist">${histHtml(b)}</div><p class="hint" style="margin-top:14px">${t("disc")}</p></div>`;
+  const u=S.user,b=u.body=u.body||{},sx=sexOf(u);
+  if(!sx){
+    return `<div class="bm" dir="${dir()}"><div class="sec"><h3>${t("title")}</h3></div>
+<div class="card" style="text-align:center"><b style="font-size:17px">${t("sexAsk")}</b><p class="hint" style="margin:6px 0 14px">${t("sexAskH")}</p>
+<div class="row2">${["m","f"].map(x=>`<button class="btn ghost" style="flex-direction:column;gap:6px;min-height:200px;padding:12px" data-a="bmSex" data-v="${x}">${fig("",x)}<b>${t(x)}</b></button>`).join("")}</div></div></div>`;
+  }
+  b.sex=sx;const now=Date.now();
+  return `<div class="bm" dir="${dir()}"><div class="sec"><h3>${t("title")}</h3><button class="btn quiet" style="width:auto;min-height:32px;padding:0 6px" data-a="bmSexChange">${t("chSex")}: ${t(sx)}</button></div>
+<div class="row2" style="margin-bottom:10px"><label class="field" style="margin:0"><span style="${lab}">${t("dateT")}</span><input class="inp" type="date" id="bm_date" max="${dstr(now)}" value="${dstr(now)}" style="width:100%"></label><label class="field" style="margin:0"><span style="${lab}">${t("timeT")}</span><input class="inp" type="time" id="bm_time" value="${hhmm(now)}" style="width:100%"></label></div>
+${KS[sx].map(k=>fld(k,sx)).join("")}
+<div class="card" style="margin:6px 0 12px"><b>${t("res")}</b><div id="bmRes" style="margin-top:8px">${resHtml(b)}</div></div>
+<button class="btn primary" data-a="bmSave">${t("save")}</button>
+<div class="card" style="margin-top:14px"><b>${t("trackT")}</b><label class="field" style="margin:10px 0 4px"><span style="${lab}">${t("goal")}</span><input class="inp ltr" id="bm_goal" inputmode="decimal" autocomplete="off" style="width:100%" value="${b.goal||""}"><small class="hint" style="display:block;margin-top:6px">${t("goalH")}</small></label><div id="bmTrack" style="margin-top:10px">${trackHtml(b)}</div></div>
+<div id="bmHist">${histHtml(b)}</div><p class="hint" style="margin-top:14px">${t("disc")}</p></div>`;
 }
 IC.body='<circle cx="12" cy="5" r="2.5"/><path d="M7 10h10M9.5 10l-1 11M14.5 10l1 11M10 14h4"/>';
 tabTips=bmPage;
@@ -1519,7 +1591,8 @@ Object.assign(ACT,{
   async dzDelYes(el){const u=S.user,i=+el.dataset.i,n=(u.cond||[])[i];if(n==null)return;u.cond.splice(i,1);(u.meds||[]).forEach(m=>{if(m.cond===n)m.cond=""});await persist();closeSheet();render()},
 
   bmOpen(){ACT.tab({dataset:{v:"tips"}})},
-  bmSex(el){const b=bmRead();b.sex=el.dataset.v;document.querySelectorAll("[data-a=bmSex]").forEach(x=>x.setAttribute("aria-pressed",x===el));bmUpdate()},
+  async bmSex(el){const v=el.dataset.v,u=S.user,b=u.body=u.body||{};b.sex=v;u.gender=v==="m"?"ذكر":"أنثى";await persist();render()},
+  async bmSexChange(){if(document.querySelector(".bm"))bmRead();const u=S.user,b=u.body=u.body||{};b.sex="";u.gender="";await persist();render()},
   bmLang(el){if(document.querySelector(".bm"))bmRead();setLang(el.dataset.v)},
   toggleLang(){setLang(LANG==="en"?"ar":"en")},
   async appleSignIn(){
@@ -1530,12 +1603,22 @@ Object.assign(ACT,{
     catch(e){S.busy=false;S.err=cloudMsg(e);render()}
   },
   async bmSave(){
-    const b=bmRead(),r=calc(b);if(!r){toast(t("need"));return}
-    (b.hist=b.hist||[]).push({at:Date.now(),h:b.h,w:b.w,neck:b.neck||0,waist:b.waist||0,hip:b.hip||0,sex:b.sex||"",bmi:+f1(r.bmi),bsa:+f1(r.bsaM,2),bf:r.bf!=null?+f1(r.bf):null});
-    b.hist=b.hist.slice(-60);if(await persist()){toast(t("saved"));bmUpdate()}
-  }
+    const b=bmRead(),sx=sexOf(S.user);b.sex=sx;const r=calc(b);if(!r){toast(t("need"));return}
+    const d=document.getElementById("bm_date"),tm=document.getElementById("bm_time");let at=Date.now();
+    if(d&&d.value){const [y,mo,da]=d.value.split("-").map(Number),[hh,mi]=((tm&&tm.value)||"00:00").split(":").map(Number);at=new Date(y,mo-1,da,hh||0,mi||0).getTime()}
+    if(at>Date.now()+60000){toast(t("future"));return}
+    const H=b.hist=b.hist||[];
+    while(H.some(e=>e.at===at))at+=1000;
+    H.push({at,h:b.h,w:b.w,neck:b.neck||0,waist:b.waist||0,hip:b.hip||0,chest:sx==="f"?(b.chest||0):0,sex:sx,bmi:+f1(r.bmi),bsa:+f1(r.bsaM,2),bf:r.bf!=null?+f1(r.bf):null});
+    H.sort((x,y)=>x.at-y.at);b.hist=H.slice(-400);
+    const last=b.hist[b.hist.length-1];for(const k of ["h","w","neck","waist","hip","chest"])if(last[k])b[k]=last[k];
+    if(await persist())toast(t("saved"));{render();const n=Date.now(),dd=document.getElementById("bm_date"),tt=document.getElementById("bm_time");if(dd)dd.value=dstr(n);if(tt)tt.value=hhmm(n)}
+  },
+  bmDel(el){const at=+el.dataset.at;openSheet(`<div dir="${dir()}"><div class="sheet-h"><h3>${t("del")}</h3><button class="icon-btn" data-a="sheetClose" aria-label="x">${ic("x")}</button></div><p>${t("delQ")}</p><div class="row2"><button class="btn ghost" data-a="sheetClose">${t("cancel2")}</button><button class="btn primary" data-a="bmDelYes" data-at="${at}">${t("yes")}</button></div></div>`)},
+  async bmDelYes(el){const at=+el.dataset.at,b=S.user.body=S.user.body||{};b.hist=(b.hist||[]).filter(e=>e.at!==at);const L=b.hist[b.hist.length-1];if(L)for(const k of ["h","w","neck","waist","hip","chest"])if(L[k])b[k]=L[k];await persist();closeSheet();render()}
 });
 document.addEventListener("input",ev=>{if(ev.target.closest&&ev.target.closest(".bm")&&ev.target.id?.startsWith("bm_"))bmUpdate()});
+document.addEventListener("change",ev=>{if(ev.target&&ev.target.id==="bm_goal"&&S.user){bmRead();persist()}});
 
 
 /* ===== Home page: personal / treatment / tests / body measurements ===== */
